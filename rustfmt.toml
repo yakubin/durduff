@@ -1,0 +1,3 @@
+ignore = [
+    "src/color_codes.rs",
+]

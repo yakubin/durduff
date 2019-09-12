@@ -1,0 +1,88 @@
+# 1. Default options
+{exe} old new
+>>>
++ b
+- bar
+~ c
+~ foo/a
+>>>2
+>>>= 0
+
+# 2. Different block size
+{exe} --block-size 100 old new
+>>>
++ b
+- bar
+~ c
+~ foo/a
+>>>2
+>>>= 0
+
+# 3. Percent-encoded paths
+{exe} --percent old new
+>>>
++ b
+- bar
+~ c
+~ foo/a
+>>>2
+>>>= 0
+
+# 4. Don't print diff. Just inform if dirs differ.
+{exe} --brief old new
+>>>
+directory trees differ
+>>>2
+>>>= 0
+
+# 5. 2 + 3
+{exe} --block-size 100 --percent old new
+>>>
++ b
+- bar
+~ c
+~ foo/a
+>>>2
+>>>= 0
+
+# 6. 2 + 4
+{exe} --block-size 100 --brief old new
+>>>
+directory trees differ
+>>>2
+>>>= 0
+
+# 7. 3 + 4
+{exe} --percent --brief old new
+>>>
+directory trees differ
+>>>2
+>>>= 0
+
+# 8. 2 + 3 + 4
+{exe} --block-size 100 --percent --brief old new
+>>>
+directory trees differ
+>>>2
+>>>= 0
+
+# 9. Negative block size
+{exe} --block-size -5 old new
+>>>
+>>>2
+{exe}: CLI error: invalid block size: -5
+>>>= 2
+
+# 10. Text block size
+{exe} --block-size five old new
+>>>
+>>>2
+{exe}: CLI error: invalid block size: five
+>>>= 2
+
+# 11. Zero block size
+{exe} --block-size 0 old new
+>>>
+>>>2
+{exe}: CLI error: invalid block size: 0
+>>>= 2

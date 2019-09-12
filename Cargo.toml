@@ -1,0 +1,17 @@
+[package]
+name = "dirdiff"
+version = "0.1.0-beta.0"
+authors = ["Jakub Alba <jakub@yakubin.com>"]
+edition = "2018"
+license = "BSD-3-Clause"
+description = "compare directories file by file"
+readme = "README.md"
+categories = ["command-line-utilities", "filesystem"]
+keywords = ["cli", "diff", "directory"]
+
+[dependencies]
+atty = "0.2.13"
+cfg-if = "0.1"
+getopts = "0.2"
+percent-encoding = "2.1.0"
+term_size = "0.3"

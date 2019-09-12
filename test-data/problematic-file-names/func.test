@@ -1,0 +1,96 @@
+# 1. Default options
+{exe} old new
+>>>
++ b
++ b	α	r
+- b α r
+! path contains the LINE FEED character. falling back to percent-encoding.
+- hello%0Aworld
+~ foo/a
+>>>2
+{exe}: number of errors: 1
+>>>= 1
+
+# 2. Different block size
+{exe} --block-size 100 old new
+>>>
++ b
++ b	α	r
+- b α r
+! path contains the LINE FEED character. falling back to percent-encoding.
+- hello%0Aworld
+~ foo/a
+>>>2
+{exe}: number of errors: 1
+>>>= 1
+
+# 3. Percent-encoded paths
+{exe} --percent old new
+>>>
++ b
++ b%09%CE%B1%09r
+- b%20%CE%B1%20r
+- hello%0Aworld
+~ foo/a
+>>>2
+>>>= 0
+
+# 4. Don't print diff. Just inform if dirs differ.
+{exe} --brief old new
+>>>
+directory trees differ
+>>>2
+>>>= 0
+
+# 5. 2 + 3
+{exe} --block-size 100 --percent old new
+>>>
++ b
++ b%09%CE%B1%09r
+- b%20%CE%B1%20r
+- hello%0Aworld
+~ foo/a
+>>>2
+>>>= 0
+
+# 6. 2 + 4
+{exe} --block-size 100 --brief old new
+>>>
+directory trees differ
+>>>2
+>>>= 0
+
+# 7. 3 + 4
+{exe} --percent --brief old new
+>>>
+directory trees differ
+>>>2
+>>>= 0
+
+# 8. 2 + 3 + 4
+{exe} --block-size 100 --percent --brief old new
+>>>
+directory trees differ
+>>>2
+>>>= 0
+
+# 9. Negative block size
+{exe} --block-size -5 old new
+>>>
+>>>2
+{exe}: CLI error: invalid block size: -5
+>>>= 2
+
+# 10. Text block size
+{exe} --block-size five old new
+>>>
+>>>2
+{exe}: CLI error: invalid block size: five
+>>>= 2
+
+# 11. Zero block size
+{exe} --block-size 0 old new
+>>>
+>>>2
+{exe}: CLI error: invalid block size: 0
+>>>= 2
