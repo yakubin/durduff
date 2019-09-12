@@ -4,8 +4,8 @@ dirdiff lets you compare directories file by file.
 
 ## Installation
 
-In a minute it will be available on <crates.io>. Packages for Linux distros,
-BSDs, Mac and Windows are a TODO.
+In a minute it will be available on [crates.io](https://crates.io). Packages for
+Linux distros, BSDs, Mac and Windows are a TODO.
 
 ## Building
 
