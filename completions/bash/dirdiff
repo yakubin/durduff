@@ -53,6 +53,9 @@ _dirdiff()
 
     # only two directory names are necessary (and allowed)
     case "${great_great_prev}" in
+        --)
+            suggest_dirs=0
+            ;;
         -b|--block-size|--color)
             suggest_dirs=1
             ;;
