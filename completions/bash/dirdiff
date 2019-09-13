@@ -1,0 +1,79 @@
+_dirdiff()
+{
+    local cur prev opts base
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    great_prev="${COMP_WORDS[COMP_CWORD-2]}"
+    great_great_prev="${COMP_WORDS[COMP_CWORD-3]}"
+
+    #
+    #  The options we'll complete.
+    #
+    opts="-q --brief -p --progress --color --percent -b --block-size -h --help --version"
+
+    #
+    #  Complete the arguments to some of the options.
+    #
+    case "${prev}" in
+        --color)
+            COMPREPLY=( $(compgen -W "never always auto" -- ${cur}) )
+            return 0
+            ;;
+        -b|--block-size)
+            return 0
+            ;;
+        *)
+            ;;
+    esac
+
+    #
+    # Suggest options only if the previous argument was an option.
+    #
+    case "${prev}" in
+        -q|--brief|-p|--progress|--percent|-h|--help|--version)
+            suggest_opts=1
+            ;;
+        *)
+            case "${great_prev}" in
+                --color|-b|--block-size)
+                    suggest_opts=1
+                    ;;
+                *)
+                    suggest_opts=0
+                    ;;
+            esac
+            ;;
+    esac
+
+    if [ ${COMP_CWORD} -eq 1 ]; then
+        # no arguments have been provided so far
+        suggest_opts=1
+    fi
+
+    # only two directory names are necessary (and allowed)
+    case "${great_great_prev}" in
+        -b|--block-size|--color)
+            suggest_dirs=1
+            ;;
+        *)
+            case "${great_prev}" in
+                -*)
+                    suggest_dirs=1
+                    ;;
+                *)
+                    suggest_dirs=0
+                    ;;
+            esac
+            ;;
+    esac
+
+    if [ ${suggest_opts} -eq 1 ]; then
+        COMPREPLY=($(compgen -A directory -W "${opts}" -- ${cur}))
+    elif [ ${suggest_dirs} -eq 1 ]; then
+        COMPREPLY=($(compgen -A directory -- ${cur}))
+    fi
+
+    return 0
+}
+complete -F _dirdiff dirdiff
