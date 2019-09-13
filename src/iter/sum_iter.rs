@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 use std::iter::Iterator;
 use std::iter::Peekable;
 
-/// Indicates which source iterators an item yielded from `SumIter` was yielded from.
+/// Indicates which source iterator an item yielded from `SumIter` was yielded from.
 #[derive(Debug, PartialEq, Eq)]
 pub enum SumIterSelector {
     Left,
@@ -31,7 +31,7 @@ enum TwoItersPeek {
 }
 
 /// Iterator yielding the sum (in the set-theoretic sense) of two iterators along with a selector
-/// which indicates which iterator yielded a given item.
+/// indicating which iterator yielded a given item.
 ///
 ///     +---------+         +---------+                       +------------+
 ///     | LhsIter |         | RhsIter |                       |  SumIter   |

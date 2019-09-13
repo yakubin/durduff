@@ -11,7 +11,7 @@ use std::path::PathBuf;
 
 /// Compares paths, so that:
 /// - paths with a smaller number of components are smaller
-/// - paths with equal numbers of components are compares lexicographically
+/// - paths with equal numbers of components are compared lexicographically
 pub fn cmp_paths(lhs: &PathBuf, rhs: &PathBuf) -> Ordering {
     match lhs.components().count().cmp(&rhs.components().count()) {
         Ordering::Equal => lhs.cmp(rhs),

@@ -11,8 +11,8 @@ use crate::verdict::Verdict;
 
 const DEFAULT_BLKSIZE: usize = 512 << 10; // 512 KiB
 
-/// Based on items from `SumIter` gives verdicts whether files at a specified path (with different
-/// prefixes) differ.
+/// Based on items from `SumIter`, `Verdictor` gives verdicts whether files at a specified path
+/// (with different prefixes) differ.
 pub struct Verdictor<'a> {
     lhs_prefix: &'a Path,
 
@@ -86,7 +86,8 @@ impl<'a> Verdictor<'a> {
         self.cmp_readers(lhs_file, rhs_file)
     }
 
-    /// Compares files with the paths ending with suffix `suffix` and beginning with prefixes passed to `new`.
+    /// Compares files with the paths ending with suffix `suffix` and beginning with prefixes
+    /// passed to `new`.
     fn cmp_files(&mut self, suffix: &Path) -> Result<Verdict> {
         let lhs_path = self.lhs_prefix.join(&suffix);
         let rhs_path = self.rhs_prefix.join(&suffix);
@@ -135,8 +136,8 @@ impl<'a> Verdictor<'a> {
         }
     }
 
-    /// Compares files with the paths ending with suffix `suffix` and beginning with prefixes passed to `new`.
-    /// Relies on the caller to inform through `sel` which of the two files exist.
+    /// Compares files with the paths ending with suffix `suffix` and beginning with prefixes
+    /// passed to `new`. Relies on the caller to inform through `sel` which of the two files exist.
     pub fn get_verdict(&mut self, sel: &SumIterSelector, path: &Path) -> Result<Verdict> {
         match sel {
             SumIterSelector::Left => Ok(Verdict::Deleted),
