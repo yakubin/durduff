@@ -8,6 +8,9 @@ description = "compare directories file by file"
 readme = "README.md"
 categories = ["command-line-utilities", "filesystem"]
 keywords = ["cli", "diff", "directory"]
+documentation = "https://docs.rs/crate/dirdiff"
+homepage = "https://git.sr.ht/~yakubin/dirdiff"
+repository = "https://git.sr.ht/~yakubin/dirdiff"
 
 [dependencies]
 atty = "0.2.13"
