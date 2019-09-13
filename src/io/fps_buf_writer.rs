@@ -26,7 +26,11 @@ pub struct FpsBufWriter<'a, W: Write> {
 }
 
 impl<'a, W: Write> FpsBufWriter<'a, W> {
-    pub fn new(inner: W, progress_out: &'a mut dyn Write, get_progress_out_width: fn() -> usize) -> Self {
+    pub fn new(
+        inner: W,
+        progress_out: &'a mut dyn Write,
+        get_progress_out_width: fn() -> usize,
+    ) -> Self {
         Self {
             inner: ManualBufWriter::new(inner, 0),
             last_flush: Instant::now(),
@@ -83,7 +87,8 @@ impl<'a, W: Write> FpsBufWriter<'a, W> {
         }
 
         self.clear_progress_line()?;
-        self.progress.print((self.get_progress_out_width)(), &mut self.progress_out)
+        self.progress
+            .print((self.get_progress_out_width)(), &mut self.progress_out)
     }
 }
 

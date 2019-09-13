@@ -97,8 +97,16 @@ impl<'a> Verdictor<'a> {
         let lhs_file_type = lhs_metadata.file_type();
         let rhs_file_type = rhs_metadata.file_type();
 
-        let lhs_ftype = (lhs_file_type.is_dir(), lhs_file_type.is_file(), lhs_file_type.is_symlink());
-        let rhs_ftype = (rhs_file_type.is_dir(), rhs_file_type.is_file(), rhs_file_type.is_symlink());
+        let lhs_ftype = (
+            lhs_file_type.is_dir(),
+            lhs_file_type.is_file(),
+            lhs_file_type.is_symlink(),
+        );
+        let rhs_ftype = (
+            rhs_file_type.is_dir(),
+            rhs_file_type.is_file(),
+            rhs_file_type.is_symlink(),
+        );
 
         if lhs_ftype != rhs_ftype {
             Ok(Verdict::Modified)
@@ -116,8 +124,14 @@ impl<'a> Verdictor<'a> {
         } else if lhs_file_type.is_dir() {
             Ok(Verdict::Same)
         } else {
-            let err_msg = format!("unrecognized file type for path: {}", lhs_path.to_string_lossy());
-            Err(Error::Lhs(std::io::Error::new(std::io::ErrorKind::InvalidData, err_msg)))
+            let err_msg = format!(
+                "unrecognized file type for path: {}",
+                lhs_path.to_string_lossy()
+            );
+            Err(Error::Lhs(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                err_msg,
+            )))
         }
     }
 

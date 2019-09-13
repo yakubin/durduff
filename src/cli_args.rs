@@ -72,7 +72,7 @@ impl FromStr for CliColor {
             "never" => Ok(CliColor::Never),
             "always" => Ok(CliColor::Always),
             "auto" => Ok(CliColor::Auto),
-            s => Err(CliError::InvalidColor(s.to_string()))
+            s => Err(CliError::InvalidColor(s.to_string())),
         }
     }
 }
@@ -116,9 +116,23 @@ impl TryFrom<&[String]> for CliArgs {
 
         opts.optflag("q", "brief", "report only when directories differ");
         opts.optflag("p", "progress", "show progress bar");
-        opts.optopt("", "color", "print output in color (<when> may be one of: never, always, auto)", "<when>");
-        opts.optflag("", "percent", "utf-8 percent-encode paths using the path percent-encode set");
-        opts.optopt("b", "block-size", "read files in blocks of <block-size> bytes", "<block-size>");
+        opts.optopt(
+            "",
+            "color",
+            "print output in color (<when> may be one of: never, always, auto)",
+            "<when>",
+        );
+        opts.optflag(
+            "",
+            "percent",
+            "utf-8 percent-encode paths using the path percent-encode set",
+        );
+        opts.optopt(
+            "b",
+            "block-size",
+            "read files in blocks of <block-size> bytes",
+            "<block-size>",
+        );
         opts.optflag("h", "help", "print help information and exit");
         opts.optflag("", "version", "print version information and exit");
 
@@ -158,7 +172,6 @@ impl TryFrom<&[String]> for CliArgs {
         } else {
             None
         };
-
 
         Ok(Self {
             opts,

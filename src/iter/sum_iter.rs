@@ -83,9 +83,15 @@ impl<I: Iterator> Iterator for SumIter<I> {
         };
 
         match peek {
-            TwoItersPeek::Left | TwoItersPeek::Both(Ordering::Less) => SumIterSelector::Left.wrap(self.lhs_iter.next()),
-            TwoItersPeek::Right | TwoItersPeek::Both(Ordering::Greater) => SumIterSelector::Right.wrap(self.rhs_iter.next()),
-            TwoItersPeek::Both(Ordering::Equal) => SumIterSelector::Both.wrap(self.skip_rhs_take_lhs()),
+            TwoItersPeek::Left | TwoItersPeek::Both(Ordering::Less) => {
+                SumIterSelector::Left.wrap(self.lhs_iter.next())
+            }
+            TwoItersPeek::Right | TwoItersPeek::Both(Ordering::Greater) => {
+                SumIterSelector::Right.wrap(self.rhs_iter.next())
+            }
+            TwoItersPeek::Both(Ordering::Equal) => {
+                SumIterSelector::Both.wrap(self.skip_rhs_take_lhs())
+            }
         }
     }
 
@@ -115,14 +121,14 @@ mod tests {
 
         let sum: Vec<_> = SumIter::new(lhs.drain(..), rhs.drain(..), u32::cmp).collect();
 
-        let expected = vec!
-            [ (SumIterSelector::Right, 1)
-            , (SumIterSelector::Left, 2)
-            , (SumIterSelector::Left, 5)
-            , (SumIterSelector::Right, 7)
-            , (SumIterSelector::Right, 8)
-            , (SumIterSelector::Both, 9)
-            ];
+        let expected = vec![
+            (SumIterSelector::Right, 1),
+            (SumIterSelector::Left, 2),
+            (SumIterSelector::Left, 5),
+            (SumIterSelector::Right, 7),
+            (SumIterSelector::Right, 8),
+            (SumIterSelector::Both, 9),
+        ];
 
         assert_eq!(sum, expected);
     }

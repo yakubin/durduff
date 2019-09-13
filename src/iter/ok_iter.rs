@@ -52,10 +52,7 @@ where
 {
     /// Creates a new `OkIter`. `err` is assumed to be `None`.
     pub fn new(inner: I, err: &'a mut Option<E>) -> OkIter<'a, T, E, I> {
-        OkIter {
-            inner,
-            err,
-        }
+        OkIter { inner, err }
     }
 }
 

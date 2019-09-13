@@ -110,7 +110,7 @@ where
 {
     let color_codes = match (&args.color, atty::is(atty::Stream::Stdout)) {
         (CliColor::Never, _) | (CliColor::Auto, false) => LineStatusColorCodes::no_color(),
-        (CliColor::Always, _)| (CliColor::Auto, true) => LineStatusColorCodes::color(),
+        (CliColor::Always, _) | (CliColor::Auto, true) => LineStatusColorCodes::color(),
     };
 
     let mut printer = DiffPrinter::new(color_codes, args.percent_paths);

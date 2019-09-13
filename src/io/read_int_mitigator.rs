@@ -64,7 +64,7 @@ mod tests {
 
             let target_slice = &mut buf[..len];
 
-            target_slice.copy_from_slice(self.content.get(self.pos..self.pos+len).unwrap());
+            target_slice.copy_from_slice(self.content.get(self.pos..self.pos + len).unwrap());
 
             self.pos += len;
 
