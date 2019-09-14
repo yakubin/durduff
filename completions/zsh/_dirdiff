@@ -1,0 +1,11 @@
+#compdef dirdiff
+_arguments -s \
+    '(-q --brief)'{-q,--brief}'[Report only when directories differ]' \
+    '(-p --progress)'{-p,--progress}'[Show progress bar]' \
+    '(--color)'--color'[Print output in color]:when:(never always auto)' \
+    '(--percent)'--percent'[Utf-8 percent-encode paths]' \
+    '(-b --block-size)'{-b,--block-size}'[Read files in blocks of <block-size> bytes]:block_size:()' \
+    '(-h --help)'{-h,--help}'[Print help information and exit]' \
+    '(--version)'--version'[Print version information and exit]' \
+    '1:old:_directories' \
+    '2:new:_directories'
