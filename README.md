@@ -31,14 +31,34 @@ To build the release version, run:
 
 The resulting binary will be located at `target/release/dirdiff`.
 
+### The command completions
+
+You will need make and sed to do that.
+
+    $ make build-completions
+
+The resulting completions will be placed in the `completions` directory.
+
+If you want to generate the completions substituting `EXE_NAME` for `dirdiff`,
+invoke this command instead:
+
+    $ make EXE=EXE_NAME build-completions
+
 ### The man page
 
-You will need make, gzip and [scdoc](https://git.sr.ht/~sircmpwn/scdoc) to do
-that.
+You will need make, sed, gzip and [scdoc](https://git.sr.ht/~sircmpwn/scdoc) to
+do that.
 
     $ make build-man
 
 The resulting gzipped man page will be located at `dirdiff.1.gz`.
+
+If you want to generate the man page substituting `EXE_NAME` for `dirdiff`,
+invoke this command instead:
+
+    $ make EXE=EXE_NAME build-man
+
+The resulting gzipped man page will be located at `EXE_NAME.1.gz`.
 
 ## Running tests
 
