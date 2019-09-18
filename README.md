@@ -64,11 +64,6 @@ Functional tests of the release version:
 
 ## Options
 
-    dirdiff(1)                  General Commands Manual                 dirdiff(1)
-
-    NAME
-           dirdiff - compare directories file by file
-
     SYNOPSIS
            dirdiff [option]... <old> <new>
 
@@ -95,12 +90,6 @@ Functional tests of the release version:
 
            --version
                Print version information and exit.
-
-    AUTHOR
-           Written by Jakub Alba <jakub@yakubin.com>.
-
-    SEE ALSO
-           diff(1) hashdeep(1)
 
 ## Example usage
 
@@ -132,6 +121,16 @@ Functional tests of the release version:
     ~ c
     ~ foo/a
 
-## Contributing
+## Bugs, patches, support
 
-Send patches/bug reports to <jakub@yakubin.com>.
+Report bugs to: <~yakubin/dirdiff@todo.sr.ht>, or via web:
+<https://todo.sr.ht/~yakubin/dirdiff>.
+
+Send patches to: <~yakubin/dirdiff-devel@lists.sr.ht>.
+
+If you need help with dirdiff, send a mail to:
+<~yakubin/dirdiff-user@lists.sr.ht>.
+
+Please, remember about the [mailing list
+ettiquette](https://man.sr.ht/lists.sr.ht/etiquette.md) when using these mailing
+lists.

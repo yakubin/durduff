@@ -36,6 +36,19 @@ dirdiff - compare directories file by file
 
 Written by Jakub Alba <jakub@yakubin.com>.
 
+# BUGS, PATCHES, SUPPORT
+
+Report bugs to: <~yakubin/dirdiff@todo.sr.ht>, or via web:
+<https://todo.sr.ht/~yakubin/dirdiff>.
+
+Send patches to: <~yakubin/dirdiff-devel@lists.sr.ht>.
+
+If you need help with dirdiff, send a mail to:
+<~yakubin/dirdiff-user@lists.sr.ht>.
+
+Please, remember about the mailing list ettiquette when using these mailing
+lists: <https://man.sr.ht/lists.sr.ht/etiquette.md>.
+
 # SEE ALSO
 
 *diff*(1) *hashdeep*(1)
