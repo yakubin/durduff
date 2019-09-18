@@ -1,12 +1,12 @@
-dirdiff(1)
+{exe}(1)
 
 # NAME
 
-dirdiff - compare directories file by file
+{exe} - compare directories file by file
 
 # SYNOPSIS
 
-*dirdiff* [option]... <old> <new>
+*{exe}* [option]... <old> <new>
 
 # OPTIONS
 

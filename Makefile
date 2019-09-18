@@ -1,11 +1,21 @@
+EXE=dirdiff
+
 build-debug:
 	@cargo build
 
 build-release:
 	@cargo build --release
 
+build-completions:
+	mkdir -p completions/bash
+	mkdir -p completions/fish
+	mkdir -p completions/zsh
+	sed -e "s/{exe}/${EXE}/g" completions.in/bash/dirdiff > completions/bash/${EXE}
+	sed -e "s/{exe}/${EXE}/g" completions.in/fish/dirdiff.fish > completions/fish/${EXE}.fish
+	sed -e "s/{exe}/${EXE}/g" completions.in/zsh/_dirdiff > completions/zsh/_${EXE}
+
 build-man:
-	scdoc < dirdiff.1.scd | gzip > dirdiff.1.gz
+	sed -e "s/{exe}/${EXE}/g" dirdiff.1.scd | scdoc | gzip > ${EXE}.1.gz
 
 debug-unit-tests:
 	@cargo test

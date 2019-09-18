@@ -1,4 +1,4 @@
-_dirdiff()
+_{exe}()
 {
     local cur prev opts base
     COMPREPLY=()
@@ -79,4 +79,4 @@ _dirdiff()
 
     return 0
 }
-complete -F _dirdiff dirdiff
+complete -F _{exe} {exe}
