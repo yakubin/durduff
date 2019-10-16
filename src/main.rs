@@ -37,7 +37,7 @@ use crate::iter::SumIterSelector;
 
 use crate::verdictor::Verdictor;
 
-/// Get `dirdiff` version (as specified in Cargo.toml).
+/// Get `durduff` version (as specified in Cargo.toml).
 fn get_version() -> String {
     let core = format!(
         "{}.{}.{}",
@@ -52,7 +52,7 @@ fn get_version() -> String {
     }
 }
 
-/// Result of dirdiff execution.
+/// Result of durduff execution.
 enum ExecResult {
     AllGood,
     SomeErrors,

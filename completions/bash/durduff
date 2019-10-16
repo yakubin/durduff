@@ -1,4 +1,4 @@
-_{exe}()
+_durduff()
 {
     local cur prev opts base
     COMPREPLY=()
@@ -79,4 +79,4 @@ _{exe}()
 
     return 0
 }
-complete -F _{exe} {exe}
+complete -F _durduff durduff

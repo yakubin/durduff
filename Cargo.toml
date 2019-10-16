@@ -1,16 +1,16 @@
 [package]
-name = "dirdiff"
-version = "0.1.0-beta.1"
+name = "durduff"
+version = "0.1.0-alpha.1"
 authors = ["Jakub Alba <jakub@yakubin.com>"]
 edition = "2018"
 license = "BSD-3-Clause"
 description = "compare directories file by file"
 readme = "README.md"
 categories = ["command-line-utilities", "filesystem"]
-keywords = ["cli", "diff", "directory"]
-documentation = "https://docs.rs/crate/dirdiff"
-homepage = "https://git.sr.ht/~yakubin/dirdiff"
-repository = "https://git.sr.ht/~yakubin/dirdiff"
+keywords = ["cli", "dir", "diff", "directory"]
+documentation = "https://docs.rs/crate/durduff"
+homepage = "https://git.sr.ht/~yakubin/durduff"
+repository = "https://git.sr.ht/~yakubin/durduff"
 
 [dependencies]
 atty = "0.2.13"

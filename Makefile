@@ -1,21 +1,11 @@
-EXE=dirdiff
-
 build-debug:
 	@cargo build
 
 build-release:
 	@cargo build --release
 
-build-completions:
-	mkdir -p completions/bash
-	mkdir -p completions/fish
-	mkdir -p completions/zsh
-	sed -e "s/{exe}/${EXE}/g" completions.in/bash/dirdiff > completions/bash/${EXE}
-	sed -e "s/{exe}/${EXE}/g" completions.in/fish/dirdiff.fish > completions/fish/${EXE}.fish
-	sed -e "s/{exe}/${EXE}/g" completions.in/zsh/_dirdiff > completions/zsh/_${EXE}
-
-build-man:
-	sed -e "s/{exe}/${EXE}/g" dirdiff.1.scd | scdoc | gzip > ${EXE}.1.gz
+man:
+	scdoc < durduff.1.scd | gzip > durduff.1.gz
 
 debug-unit-tests:
 	@cargo test
@@ -23,12 +13,17 @@ debug-unit-tests:
 release-unit-tests:
 	@cargo test --release
 
-debug-func-tests: ./target/debug/dirdiff
-	@shelltest --color --execdir "-D{exe}=../../target/debug/dirdiff" test-data
+debug-func-tests: ./target/debug/durduff
+	@shelltest --color --execdir "-D{exe}=../../target/debug/durduff" test-data
 
-release-func-tests: ./target/release/dirdiff
-	@shelltest --color --execdir "-D{exe}=../../target/release/dirdiff" test-data
+release-func-tests: ./target/release/durduff
+	@shelltest --color --execdir "-D{exe}=../../target/release/durduff" test-data
 
-./target/debug/dirdiff: build-debug
+deb: durduff.1.gz target/release/durduff
+	cargo deb
 
-./target/release/dirdiff: build-release
+durduff.1.gz: man
+
+./target/debug/durduff: build-debug
+
+./target/release/durduff: build-release

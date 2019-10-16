@@ -1,4 +1,4 @@
-#compdef {exe}
+#compdef durduff
 _arguments -s \
     '(-q --brief)'{-q,--brief}'[Report only when directories differ]' \
     '(-p --progress)'{-p,--progress}'[Show progress bar]' \

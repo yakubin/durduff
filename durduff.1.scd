@@ -1,12 +1,12 @@
-{exe}(1)
+durduff(1)
 
 # NAME
 
-{exe} - compare directories file by file
+durduff - compare directories file by file
 
 # SYNOPSIS
 
-*{exe}* [option]... <old> <new>
+*durduff* [option]... <old> <new>
 
 # OPTIONS
 
@@ -21,7 +21,7 @@
 
 *--percent*
 	Utf-8 percent-encode paths using the path percent-encode set. If you want to
-	parse dirdiff's output in a script, then you should use this option.
+	parse durduff's output in a script, then you should use this option.
 
 *-b, --block-size* <block-size>
 	Read files in blocks of <block-size> bytes.
@@ -38,13 +38,13 @@ Written by Jakub Alba <jakub@yakubin.com>.
 
 # BUGS, PATCHES, SUPPORT
 
-Report bugs to: <~yakubin/dirdiff@todo.sr.ht>, or via web:
-<https://todo.sr.ht/~yakubin/dirdiff>.
+Report bugs to: <~yakubin/durduff@todo.sr.ht>, or via web:
+<https://todo.sr.ht/~yakubin/durduff>.
 
-Send patches to: <~yakubin/dirdiff-devel@lists.sr.ht>.
+Send patches to: <~yakubin/durduff-devel@lists.sr.ht>.
 
-If you need help with dirdiff, send a mail to:
-<~yakubin/dirdiff-user@lists.sr.ht>.
+If you need help with durduff, send a mail to:
+<~yakubin/durduff-user@lists.sr.ht>.
 
 Please, remember about the mailing list ettiquette when using these mailing
 lists: <https://man.sr.ht/lists.sr.ht/etiquette.md>.

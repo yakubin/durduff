@@ -1,6 +1,6 @@
-# dirdiff
+# durduff
 
-dirdiff lets you compare directories file by file.
+durduff lets you compare directories file by file.
 
 ## Installation
 
@@ -9,7 +9,7 @@ you can install it using
 [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) from
 [crates.io](https://crates.io):
 
-    $ cargo install dirdiff
+    $ cargo install durduff
 
 ## Building
 
@@ -23,42 +23,22 @@ To build the debug version, run:
 
     $ make build-debug
 
-The resulting binary will be located at `target/debug/dirdiff`.
+The resulting binary will be located at `target/debug/durduff`.
 
 To build the release version, run:
 
     $ make build-release
 
-The resulting binary will be located at `target/release/dirdiff`.
-
-### The command completions
-
-You will need make and sed to do that.
-
-    $ make build-completions
-
-The resulting completions will be placed in the `completions` directory.
-
-If you want to generate the completions substituting `EXE_NAME` for `dirdiff`,
-invoke this command instead:
-
-    $ make EXE=EXE_NAME build-completions
+The resulting binary will be located at `target/release/durduff`.
 
 ### The man page
 
-You will need make, sed, gzip and [scdoc](https://git.sr.ht/~sircmpwn/scdoc) to
-do that.
+You will need make, gzip and [scdoc](https://git.sr.ht/~sircmpwn/scdoc) to do
+that.
 
-    $ make build-man
+    $ make man
 
-The resulting gzipped man page will be located at `dirdiff.1.gz`.
-
-If you want to generate the man page substituting `EXE_NAME` for `dirdiff`,
-invoke this command instead:
-
-    $ make EXE=EXE_NAME build-man
-
-The resulting gzipped man page will be located at `EXE_NAME.1.gz`.
+The resulting gzipped man page will be located at `durduff.1.gz`.
 
 ## Running tests
 
@@ -85,7 +65,7 @@ Functional tests of the release version:
 ## Options
 
     SYNOPSIS
-           dirdiff [option]... <old> <new>
+           durduff [option]... <old> <new>
 
     OPTIONS
            -q, --brief
@@ -99,7 +79,7 @@ Functional tests of the release version:
 
            --percent
                Utf-8 percent-encode paths using the path percent-encode set. If
-               you want to parse dirdiff's output in a script, then you should use
+               you want to parse durduff's output in a script, then you should use
                this option.
 
            -b, --block-size <block-size>
@@ -135,7 +115,7 @@ Functional tests of the release version:
     $ diff -q {old,new}/c
     Files old/c and new/c differ
     $ diff -q {old,new}/d
-    $ dirdiff old new
+    $ durduff old new
     + b
     - bar
     ~ c
@@ -143,13 +123,13 @@ Functional tests of the release version:
 
 ## Bugs, patches, support
 
-Report bugs to: <~yakubin/dirdiff@todo.sr.ht>, or via web:
-<https://todo.sr.ht/~yakubin/dirdiff>.
+Report bugs to: <~yakubin/durduff@todo.sr.ht>, or via web:
+<https://todo.sr.ht/~yakubin/durduff>.
 
-Send patches to: <~yakubin/dirdiff-devel@lists.sr.ht>.
+Send patches to: <~yakubin/durduff-devel@lists.sr.ht>.
 
-If you need help with dirdiff, send a mail to:
-<~yakubin/dirdiff-user@lists.sr.ht>.
+If you need help with durduff, send a mail to:
+<~yakubin/durduff-user@lists.sr.ht>.
 
 Please, remember about the [mailing list
 ettiquette](https://man.sr.ht/lists.sr.ht/etiquette.md) when using these mailing
