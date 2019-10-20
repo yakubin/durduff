@@ -5,7 +5,7 @@ build-release:
 	@cargo build --release
 
 man:
-	scdoc < durduff.1.scd | gzip > durduff.1.gz
+	scdoc < durduff.1.scd | gzip --no-name --best > durduff.1.gz
 
 debug-unit-tests:
 	@cargo test
@@ -19,10 +19,13 @@ debug-func-tests: ./target/debug/durduff
 release-func-tests: ./target/release/durduff
 	@shelltest --color --execdir "-D{exe}=../../target/release/durduff" test-data
 
-deb: durduff.1.gz target/release/durduff
+deb: durduff.1.gz NEWS.gz target/release/durduff
 	cargo deb
 
 durduff.1.gz: man
+
+NEWS.gz: NEWS
+	gzip --no-name --best < NEWS > NEWS.gz
 
 ./target/debug/durduff: build-debug
 

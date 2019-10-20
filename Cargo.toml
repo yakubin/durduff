@@ -18,3 +18,23 @@ cfg-if = "0.1"
 getopts = "0.2"
 percent-encoding = "2.1.0"
 term_size = "0.3"
+
+[package.metadata.deb]
+copyright = "2019, Jakub Alba <jakub@yakubin.com>"
+license-file = ["COPYING", "3"]
+section = "utils"
+assets = [
+    ["target/release/durduff", "usr/bin/", "755"],
+    ["completions/bash/durduff", "usr/share/bash-completion/completions/", "644"],
+    ["completions/zsh/_durduff", "usr/share/zsh/vendor-completions/", "644"],
+    ["completions/fish/durduff.fish", "usr/share/fish/vendor_completions.d/", "644"],
+    ["durduff.1.gz", "usr/share/man/man1/", "644"],
+    ["NEWS.gz", "usr/share/doc/durduff/changelog.gz", "644"],
+]
+extended-description = """\
+durduff prints differences between two directory trees to standard output. By \
+default, it prints file paths as UTF-8 strings. If a file path contains the \
+LINE FEED character, it will fallback to percent-encoding. For scripts parsing \
+the output of durduff, percent-encoding may be turned on for all paths with a \
+CLI option.
+"""
