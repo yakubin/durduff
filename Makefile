@@ -4,8 +4,7 @@ build-debug:
 build-release:
 	@cargo build --release
 
-man:
-	scdoc < durduff.1.scd | gzip --no-name --best > durduff.1.gz
+man: target/assets/durduff.1.gz
 
 debug-unit-tests:
 	@cargo test
@@ -13,20 +12,24 @@ debug-unit-tests:
 release-unit-tests:
 	@cargo test --release
 
-debug-func-tests: ./target/debug/durduff
+debug-func-tests: target/debug/durduff
 	@shelltest --color --execdir "-D{exe}=../../target/debug/durduff" test-data
 
-release-func-tests: ./target/release/durduff
+release-func-tests: target/release/durduff
 	@shelltest --color --execdir "-D{exe}=../../target/release/durduff" test-data
 
-deb: durduff.1.gz NEWS.gz target/release/durduff
+deb: target/assets/durduff.1.gz target/assets/NEWS.gz target/release/durduff
 	cargo deb
 
-durduff.1.gz: man
+target/debug/durduff: build-debug
 
-NEWS.gz: NEWS
-	gzip --no-name --best < NEWS > NEWS.gz
+target/release/durduff: build-release
 
-./target/debug/durduff: build-debug
+target/assets/NEWS.gz: target/assets
+	gzip --no-name --best < NEWS > target/assets/NEWS.gz
 
-./target/release/durduff: build-release
+target/assets/durduff.1.gz: target/assets
+	scdoc < durduff.1.scd | gzip --no-name --best > target/assets/durduff.1.gz
+
+target/assets:
+	mkdir --parents target/assets

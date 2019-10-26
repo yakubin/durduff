@@ -28,8 +28,8 @@ assets = [
     ["completions/bash/durduff", "usr/share/bash-completion/completions/", "644"],
     ["completions/zsh/_durduff", "usr/share/zsh/vendor-completions/", "644"],
     ["completions/fish/durduff.fish", "usr/share/fish/vendor_completions.d/", "644"],
-    ["durduff.1.gz", "usr/share/man/man1/", "644"],
-    ["NEWS.gz", "usr/share/doc/durduff/changelog.gz", "644"],
+    ["target/assets/durduff.1.gz", "usr/share/man/man1/", "644"],
+    ["target/assets/NEWS.gz", "usr/share/doc/durduff/changelog.gz", "644"],
 ]
 extended-description = """\
 durduff prints differences between two directory trees to standard output. By \
