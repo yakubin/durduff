@@ -50,3 +50,7 @@ warn_if_tree_has_untracked_files:
 warn_if_tree_has_uncommitted_changes:
 	@git diff-index --quiet --cached HEAD -- && git diff-files --quiet \
 		|| echo "`tput setaf 3`warning: tree has uncommitted changes`tput sgr 0`"
+
+warn_if_last_commit_is_not_tagged:
+	@[ -n "`git for-each-ref refs/tags --points-at=HEAD`" ] \
+		|| echo "`tput setaf 3`warning: the last commit is not tagged`tput sgr 0`"
