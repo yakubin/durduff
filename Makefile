@@ -33,3 +33,20 @@ target/assets/durduff.1.gz: target/assets
 
 target/assets:
 	mkdir --parents target/assets
+
+warn_if_tree_is_dirty: warn_if_tree_has_untracked_files warn_if_tree_has_uncommitted_changes
+
+warn_if_tree_has_untracked_files:
+	@git ls-files \
+		--exclude-standard \
+		--others \
+		--error-unmatch \
+		. \
+		>/dev/null \
+		2>&1 \
+		&& echo "`tput setaf 3`warning: tree has untracked files`tput sgr 0`" \
+		|| true
+
+warn_if_tree_has_uncommitted_changes:
+	@git diff-index --quiet --cached HEAD -- && git diff-files --quiet \
+		|| echo "`tput setaf 3`warning: tree has uncommitted changes`tput sgr 0`"
