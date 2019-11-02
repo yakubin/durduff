@@ -72,3 +72,9 @@ warn_if_cargo_and_git_disagree_what_the_current_version_is:
 		= \
 		"${semver}" ] \
 		|| echo "${fg_yellow}warning: cargo and git disagree what the current version is${fg_reset}"
+
+warn_if_changelog_is_outdated:
+	@[ `awk 'NR==1{print $$2}' NEWS | sed -e 's/,$$//'` \
+		= \
+		"${semver}" ] \
+		|| echo "${fg_yellow}warning: changelog is out of date${fg_reset}"
