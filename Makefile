@@ -1,3 +1,10 @@
+last_tag := $(shell git for-each-ref refs/tags \
+	--points-at=`git log --tags --no-walk --pretty="format:%H"` \
+	--format='%(refname:short)')
+
+semver := $(shell echo "${last_tag}" | sed -e "s/^v//" )
+tildaver := $(shell echo "${semver}" | tr '-' '~')
+
 fg_yellow := $(shell tput setaf 3)
 fg_reset := $(shell tput sgr 0)
 
