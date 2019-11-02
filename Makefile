@@ -1,3 +1,6 @@
+fg_yellow := $(shell tput setaf 3)
+fg_reset := $(shell tput sgr 0)
+
 build-debug:
 	@cargo build
 
@@ -44,13 +47,13 @@ warn_if_tree_has_untracked_files:
 		. \
 		>/dev/null \
 		2>&1 \
-		&& echo "`tput setaf 3`warning: tree has untracked files`tput sgr 0`" \
+		&& echo "${fg_yellow}warning: tree has untracked files${fg_reset}" \
 		|| true
 
 warn_if_tree_has_uncommitted_changes:
 	@git diff-index --quiet --cached HEAD -- && git diff-files --quiet \
-		|| echo "`tput setaf 3`warning: tree has uncommitted changes`tput sgr 0`"
+		|| echo "${fg_yellow}warning: tree has uncommitted changes${fg_reset}"
 
 warn_if_last_commit_is_not_tagged:
 	@[ -n "`git for-each-ref refs/tags --points-at=HEAD`" ] \
-		|| echo "`tput setaf 3`warning: the last commit is not tagged`tput sgr 0`"
+		|| echo "${fg_yellow}warning: the last commit is not tagged${fg_reset}"
