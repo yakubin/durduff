@@ -28,7 +28,7 @@ debug-func-tests: target/debug/durduff
 release-func-tests: target/release/durduff
 	@shelltest --color --execdir "-D{exe}=../../target/release/durduff" test-data
 
-deb: target/assets/durduff.1.gz target/assets/NEWS.gz target/release/durduff
+deb: target/assets/durduff.1.gz target/assets/NEWS.gz target/release/durduff release_warnings
 	cargo deb
 
 target/debug/durduff: build-debug
