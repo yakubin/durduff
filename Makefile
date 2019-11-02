@@ -64,3 +64,11 @@ warn_if_tree_has_uncommitted_changes:
 warn_if_last_commit_is_not_tagged:
 	@[ -n "`git for-each-ref refs/tags --points-at=HEAD`" ] \
 		|| echo "${fg_yellow}warning: the last commit is not tagged${fg_reset}"
+
+warn_if_cargo_and_git_disagree_what_the_current_version_is:
+	@[ `cargo metadata --no-deps --format-version 1 \
+		| jq '.packages[0].version' \
+		| tr -d '"'` \
+		= \
+		"${semver}" ] \
+		|| echo "${fg_yellow}warning: cargo and git disagree what the current version is${fg_reset}"
