@@ -44,6 +44,8 @@ target/assets/durduff.1.gz: target/assets
 target/assets:
 	mkdir --parents target/assets
 
+release_warnings: warn_if_tree_is_dirty warn_if_last_commit_is_not_tagged warn_if_cargo_and_git_disagree_what_the_current_version_is warn_if_changelog_is_outdated
+
 warn_if_tree_is_dirty: warn_if_tree_has_untracked_files warn_if_tree_has_uncommitted_changes
 
 warn_if_tree_has_untracked_files:
