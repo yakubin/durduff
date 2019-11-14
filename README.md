@@ -4,8 +4,8 @@ durduff lets you compare directories file by file.
 
 ## Installation
 
-Packages for Linux distros, BSDs, Mac and Windows are a TODO. In the mean time
-you can install it using
+Packages for Linux distros, BSDs, and Windows are a TODO. In the mean time you
+can install it using
 [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) from
 [crates.io](https://crates.io):
 
