@@ -23,13 +23,13 @@ target/debug/durduff: build-debug
 target/release/durduff: build-release
 
 target/assets/NEWS.gz: target/assets
-	gzip --no-name --best < NEWS > target/assets/NEWS.gz
+	@gzip --no-name --best < NEWS > target/assets/NEWS.gz
 
 target/assets/durduff.1.gz: target/assets
-	scdoc < durduff.1.scd | gzip --no-name --best > target/assets/durduff.1.gz
+	@scdoc < durduff.1.scd | gzip --no-name --best > target/assets/durduff.1.gz
 
 target/assets:
-	mkdir --parents target/assets
+	@mkdir --parents target/assets
 
 ifeq ($(shell [ -d .git ] && echo git),git)
 include with-git.mk

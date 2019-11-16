@@ -9,7 +9,7 @@ fg_yellow := $(shell tput setaf 3)
 fg_reset := $(shell tput sgr 0)
 
 deb: target/assets/durduff.1.gz target/assets/NEWS.gz target/release/durduff release_warnings
-	cargo deb --no-build
+	@cargo deb --no-build
 
 source-tarball: target/source-tarball release_warnings
 	@rm --recursive --force "target/source-tarball/durduff-${tildaver}"
