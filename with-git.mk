@@ -11,6 +11,32 @@ fg_reset := $(shell tput sgr 0)
 deb: target/assets/durduff.1.gz target/assets/NEWS.gz target/release/durduff release_warnings
 	cargo deb
 
+source-tarball: target/source-tarball release_warnings
+	@rm --recursive --force "target/source-tarball/durduff-${tildaver}"
+	@rm --force "target/source-tarball/durduff-${tildaver}.tar.xz"
+	@mkdir "target/source-tarball/durduff-${tildaver}"
+
+	@find . \
+		-mindepth 1 -maxdepth 1 \
+		-not -name '.git*' \
+		-not -exec git check-ignore --quiet '{}' ';' \
+		-exec cp \
+			--recursive \
+			"--target-directory=target/source-tarball/durduff-${tildaver}" \
+			'{}' '+'
+
+	@tar \
+		--directory=target/source-tarball \
+		--create \
+		--xz \
+		--file "target/source-tarball/durduff-${tildaver}.tar.xz" \
+		"durduff-${tildaver}"
+
+	@echo "created a new source tarball: target/source-tarball/durduff-${tildaver}.tar.xz"
+
+target/source-tarball:
+	@mkdir --parents target/source-tarball
+
 release_warnings: warn_if_tree_is_dirty warn_if_last_commit_is_not_tagged warn_if_cargo_and_git_disagree_what_the_current_version_is warn_if_changelog_is_outdated
 
 warn_if_tree_is_dirty: warn_if_tree_has_untracked_files warn_if_tree_has_uncommitted_changes
