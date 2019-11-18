@@ -88,7 +88,7 @@ fn main() {
 
     if args.help {
         let brief = format!("Usage: {} [options] OLD NEW", program_name);
-        eprint!("{}", args.usage(&brief));
+        print!("{}", args.usage(&brief));
         return;
     }
 
