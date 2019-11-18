@@ -93,7 +93,7 @@ fn main() {
     }
 
     if args.version {
-        println!("{} {}", program_name, get_version());
+        println!("durduff {}", get_version());
         println!("\nBuild information:");
         print_build_info();
         return;
