@@ -52,11 +52,11 @@ fn main() {
     write!(
         f,
         "
-        pub fn eprint_build_info() {{
-            eprintln!(\"git commit: {}\");
-            eprintln!(\"host triple: {}\");
-            eprintln!(\"target triple: {}\");
-            eprintln!(\"profile: {}\");
+        pub fn print_build_info() {{
+            println!(\"git commit: {}\");
+            println!(\"host triple: {}\");
+            println!(\"target triple: {}\");
+            println!(\"profile: {}\");
         }}
     ",
         git_commit, host_triple, target_triple, profile

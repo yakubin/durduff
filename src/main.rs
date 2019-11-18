@@ -37,7 +37,7 @@ use crate::iter::SumIterSelector;
 
 use crate::verdictor::Verdictor;
 
-// Provides the `eprint_build_info` function.
+// Provides the `print_build_info` function.
 include!(concat!(env!("OUT_DIR"), "/build_info.rs"));
 
 /// Get `durduff` version (as specified in Cargo.toml).
@@ -93,9 +93,9 @@ fn main() {
     }
 
     if args.version {
-        eprintln!("{} {}", program_name, get_version());
-        eprintln!("\nBuild information:");
-        eprint_build_info();
+        println!("{} {}", program_name, get_version());
+        println!("\nBuild information:");
+        print_build_info();
         return;
     }
 
