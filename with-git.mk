@@ -11,6 +11,11 @@ fg_reset := $(shell tput sgr 0)
 deb: target/assets/durduff.1.gz target/assets/NEWS.gz target/release/durduff release_warnings
 	@cargo deb --no-build
 
+prebuilt-tarball: target/assets/durduff.1.gz target/assets/NEWS.gz target/release/durduff release_warnings
+	@# target-specific variables in Make are a mess
+	@# it's easier to write this one in a shell script
+	@./make-prebuilt-tarball.sh "${tildaver}"
+
 source-tarball: target/source-tarball release_warnings
 	@rm --recursive --force "target/source-tarball/durduff-${tildaver}"
 	@rm --force "target/source-tarball/durduff-${tildaver}.tar.xz"
