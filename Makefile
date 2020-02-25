@@ -31,6 +31,9 @@ target/assets/durduff.1.gz: target/assets
 target/assets:
 	@mkdir --parents target/assets
 
+clean:
+	@rm --recursive --force target
+
 ifeq ($(shell [ -d .git ] && echo git),git)
 include with-git.mk
 endif
