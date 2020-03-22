@@ -4,8 +4,8 @@ durduff lets you compare directories file by file.
 
 ## Installation
 
-Packages for Linux distros, BSDs, and Windows are a TODO. In the mean time you
-can install it using
+Packages for Linux distros and BSDs are a TODO. In the mean time you can install
+it using
 [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) from
 [crates.io](https://crates.io):
 
@@ -38,7 +38,7 @@ that.
 
     $ make man
 
-The resulting gzipped man page will be located at `durduff.1.gz`.
+The resulting gzipped man page will be located at `target/assets/durduff.1.gz`.
 
 ## Running tests
 
@@ -77,10 +77,9 @@ Functional tests of the release version:
            --color <when>
                Print output in color (<when> may be one of: never, always, auto).
 
-           --percent
-               Utf-8 percent-encode paths using the path percent-encode set. If
-               you want to parse durduff's output in a script, then you should use
-               this option.
+           -0, --null
+               Print file paths as raw bytes without percent-encoding them and use
+               NUL (null character) instead of LF (new line) to separate lines.
 
            -b, --block-size <block-size>
                Read files in blocks of <block-size> bytes.

@@ -129,14 +129,11 @@ mod tests {
             pb("new/c"),
             pb("new/d"),
             pb("new/foo"),
-            pb("old/bar"),
             pb("old/c"),
             pb("old/d"),
             pb("old/foo"),
             pb("new/foo/a"),
-            pb("new/foo/baz"),
             pb("old/foo/a"),
-            pb("old/foo/baz"),
         ];
 
         assert_eq!(paths, expected);

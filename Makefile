@@ -25,7 +25,7 @@ target/release/durduff: build-release
 target/assets/NEWS.gz: target/assets
 	@gzip --no-name --best < NEWS > target/assets/NEWS.gz
 
-target/assets/durduff.1.gz: target/assets
+target/assets/durduff.1.gz: durduff.1.scd target/assets
 	@scdoc < durduff.1.scd | gzip --no-name --best > target/assets/durduff.1.gz
 
 target/assets:

@@ -31,7 +31,7 @@ pub struct CliArgs {
 
     pub color: CliColor,
 
-    pub percent_paths: bool,
+    pub nul_terminated: bool,
 
     pub block_size: Option<usize>,
 
@@ -123,9 +123,11 @@ impl TryFrom<&[String]> for CliArgs {
             "<when>",
         );
         opts.optflag(
-            "",
-            "percent",
-            "utf-8 percent-encode paths using the path percent-encode set",
+            "0",
+            "null",
+            "print file paths as raw bytes without percent-encoding them and \
+             use NUL (null character) instead of LF (new line) to separate \
+             lines",
         );
         opts.optopt(
             "b",
@@ -180,7 +182,7 @@ impl TryFrom<&[String]> for CliArgs {
             brief: matches.opt_present("brief"),
             progress: matches.opt_present("progress"),
             color,
-            percent_paths: matches.opt_present("percent"),
+            nul_terminated: matches.opt_present("null"),
             block_size,
             old_dir,
             new_dir,

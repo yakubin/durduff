@@ -2,14 +2,20 @@ use std::borrow::Cow;
 
 use std::io;
 use std::io::BufWriter;
+use std::io::IoSlice;
 use std::io::Write;
+
+use std::os::unix::ffi::OsStrExt;
 
 use std::path::Path;
 use std::path::PathBuf;
 
-use crate::io::PercentPath;
+use percent_encoding::{utf8_percent_encode, CONTROLS};
 
 use crate::error::*;
+
+use crate::io::PercentPath;
+
 use crate::verdict::Verdict;
 
 use super::FpsBufWriter;
@@ -20,7 +26,7 @@ use super::LineStatusColorCodes;
 pub struct DiffPrinter {
     color_codes: LineStatusColorCodes,
 
-    percent_paths: bool,
+    nul_terminated: bool,
 
     err_no: usize,
 }
@@ -33,44 +39,39 @@ fn get_tty_width() -> usize {
 }
 
 impl DiffPrinter {
-    fn print_line<W: Write>(&mut self, out: &mut W, status: &LineStatus, path: &Path) {
+    fn print_line<W: Write>(&mut self, out: &mut W, status: LineStatus, path: &Path) {
         let color_code = self.color_codes.get(status);
-        let indicator = status.indicator();
 
-        if !self.percent_paths {
+        if self.nul_terminated {
+            // nul-termination implies no color codes. they would only mess up parsing by other
+            // programs
+
+            let raw_bytes = path.as_os_str().as_bytes();
+
+            let indicator_bytes = [status.indicator() as u8];
+
+            let out_vec = [
+                IoSlice::new(&indicator_bytes),
+                IoSlice::new(b" "),
+                IoSlice::new(raw_bytes),
+                IoSlice::new(&[0]),
+            ];
+
+            out.write_vectored(&out_vec).unwrap();
+        } else {
             let unicode_path = path.to_string_lossy();
-
-            if !unicode_path.contains('\n') {
-                writeln!(
-                    out,
-                    "{}{} {}{}",
-                    color_code, indicator, unicode_path, self.color_codes.reset
-                )
-                .unwrap();
-
-                return;
-            }
+            let percent_path = utf8_percent_encode(&unicode_path, &CONTROLS);
 
             writeln!(
                 out,
-                "{}{} path contains the LINE FEED character. falling back to percent-encoding.{}",
-                self.color_codes.get(&LineStatus::Error),
-                LineStatus::Error.indicator(),
+                "{}{} {}{}",
+                color_code,
+                status.indicator(),
+                percent_path,
                 self.color_codes.reset
             )
             .unwrap();
-
-            self.err_no += 1;
         }
-
-        let percent_path = PercentPath::from(path);
-
-        writeln!(
-            out,
-            "{}{} {}{}",
-            color_code, indicator, percent_path, self.color_codes.reset
-        )
-        .unwrap();
     }
 
     fn print_verdict<W: Write>(&mut self, out: &mut W, path: &Path, verdict: &Verdict) {
@@ -81,37 +82,53 @@ impl DiffPrinter {
             Verdict::Same => return,
         };
 
-        self.print_line(out, &status, path);
+        self.print_line(out, status, path);
     }
 
     fn print_error<W: Write>(&self, out: &mut W, path: &Path, error: &Error) {
-        let color_code = self.color_codes.get(&LineStatus::Error);
-
         let (prefix, io_error) = match error {
             Error::Lhs(e) => (Path::new("OLD"), e),
             Error::Rhs(e) => (Path::new("NEW"), e),
         };
 
-        let err_str: Cow<str> = match io_error.kind() {
-            io::ErrorKind::NotFound => Cow::from("file not found"),
-            io::ErrorKind::PermissionDenied => Cow::from("permission denied"),
-            io::ErrorKind::Interrupted => Cow::from("file reading was interrupted"),
-            io::ErrorKind::InvalidData => Cow::from(format!("invalid data: {}", io_error)),
-            _ => Cow::from(format!("unexpected error: {:?}", io_error)),
-        };
-
         let full_path = prefix.join(path);
 
-        writeln!(
-            out,
-            "{}{} error for file {}: {}{}",
-            color_code,
-            LineStatus::Error.indicator(),
-            PercentPath::from(&full_path),
-            err_str,
-            self.color_codes.reset
-        )
-        .unwrap();
+        if self.nul_terminated {
+            // nul-termination implies no color codes. they would only mess up parsing by other
+            // programs
+
+            let raw_bytes = full_path.as_os_str().as_bytes();
+
+            let out_vec = [
+                IoSlice::new(&[LineStatus::Error as u8]),
+                IoSlice::new(b" "),
+                IoSlice::new(&raw_bytes),
+                IoSlice::new(&[0]),
+            ];
+
+            out.write_vectored(&out_vec).unwrap();
+        } else {
+            let color_code = self.color_codes.get(LineStatus::Error);
+
+            let err_str: Cow<str> = match io_error.kind() {
+                io::ErrorKind::NotFound => Cow::from("file not found"),
+                io::ErrorKind::PermissionDenied => Cow::from("permission denied"),
+                io::ErrorKind::Interrupted => Cow::from("file reading was interrupted"),
+                io::ErrorKind::InvalidData => Cow::from(format!("invalid data: {}", io_error)),
+                _ => Cow::from(format!("unexpected error: {:?}", io_error)),
+            };
+
+            writeln!(
+                out,
+                "{}{} {}: {}{}",
+                color_code,
+                LineStatus::Error.indicator(),
+                err_str,
+                PercentPath::from(&full_path),
+                self.color_codes.reset
+            )
+            .unwrap();
+        }
     }
 
     pub fn print<W: Write>(&mut self, out: &mut W, path: &Path, result: &Result<Verdict>) {
@@ -122,10 +139,6 @@ impl DiffPrinter {
                 self.print_error(out, path, e);
             }
         }
-    }
-
-    pub fn err_no(&self) -> usize {
-        self.err_no
     }
 
     pub fn print_full<I>(
@@ -183,15 +196,15 @@ impl DiffPrinter {
             println!("directory trees differ");
         }
 
-        self.err_no()
+        self.err_no
     }
 
     /// Creates a new `DiffPrinter` which will use `color_codes` to write colored output.
     /// `percent_paths` determines if the paths will be percent-encoded.
-    pub fn new(color_codes: LineStatusColorCodes, percent_paths: bool) -> Self {
+    pub fn new(color_codes: LineStatusColorCodes, nul_terminated: bool) -> Self {
         Self {
             color_codes,
-            percent_paths,
+            nul_terminated,
             err_no: 0,
         }
     }

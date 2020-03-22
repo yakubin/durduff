@@ -34,8 +34,8 @@ assets = [
 ]
 extended-description = """\
 durduff prints differences between two directory trees to standard output. By \
-default, it prints file paths as UTF-8 strings. If a file path contains the \
-LINE FEED character, it will fallback to percent-encoding. For scripts parsing \
-the output of durduff, percent-encoding may be turned on for all paths with a \
-CLI option.
+default, it UTF-8 percent-encodes file paths. Any non-Unicode byte sequences \
+are replaced with U+FFFD REPLACEMENT CHARACTER. This output is not \
+script-friendly. For scripts parsing the output of durduff, printing paths as \
+raw bytes separated with NUL can be turned on with a CLI option.
 """

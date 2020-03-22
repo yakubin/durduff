@@ -122,7 +122,7 @@ where
         (CliColor::Always, _) | (CliColor::Auto, true) => LineStatusColorCodes::color(),
     };
 
-    let mut printer = DiffPrinter::new(color_codes, args.percent_paths);
+    let mut printer = DiffPrinter::new(color_codes, args.nul_terminated);
 
     if !args.progress {
         let mut sink = std::io::sink();

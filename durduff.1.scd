@@ -19,9 +19,9 @@ durduff - compare directories file by file
 *--color* <when>
 	Print output in color (<when> may be one of: never, always, auto).
 
-*--percent*
-	Utf-8 percent-encode paths using the path percent-encode set. If you want to
-	parse durduff's output in a script, then you should use this option.
+*-0, --null*
+	Print file paths as raw bytes without percent-encoding them and use NUL
+	(null character) instead of LF (new line) to separate lines.
 
 *-b, --block-size* <block-size>
 	Read files in blocks of <block-size> bytes.

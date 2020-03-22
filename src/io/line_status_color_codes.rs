@@ -32,7 +32,7 @@ impl LineStatusColorCodes {
         }
     }
 
-    pub fn get(&self, status: &LineStatus) -> &'static str {
+    pub fn get(&self, status: LineStatus) -> &'static str {
         match status {
             LineStatus::Deleted => self.deleted,
             LineStatus::Added => self.added,
