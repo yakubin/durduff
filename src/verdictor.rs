@@ -1,10 +1,11 @@
 use std::fs::File;
 
+use std::io;
 use std::io::Read;
 
 use std::path::Path;
+use std::path::PathBuf;
 
-use crate::error::*;
 use crate::io::ReadIntMitigator;
 use crate::iter::SumIterSelector;
 use crate::verdict::Verdict;
@@ -23,6 +24,30 @@ pub struct Verdictor<'a> {
     rhs_buf: Vec<u8>,
 
     blksize: usize,
+}
+
+type PrivError<'a> = (io::ErrorKind, &'a Path);
+
+type PrivResult<'a> = Result<Verdict, PrivError<'a>>;
+
+fn priv_result_to_ver_path(result: PrivResult, path: PathBuf) -> (Verdict, PathBuf) {
+    match result {
+        Ok(verdict) => (verdict, path),
+        Err((error_kind, prefix)) => (Verdict::Error(error_kind), prefix.join(path)),
+    }
+}
+
+trait IoResult<T> {
+    fn annotate<'a>(self, path: &'a Path) -> Result<T, PrivError>;
+}
+
+impl<T> IoResult<T> for io::Result<T> {
+    fn annotate<'a>(self, path: &'a Path) -> Result<T, PrivError> {
+        match self {
+            Ok(v) => Ok(v),
+            Err(e) => Err((e.kind(), path)),
+        }
+    }
 }
 
 impl<'a> Verdictor<'a> {
@@ -44,9 +69,9 @@ impl<'a> Verdictor<'a> {
     }
 
     /// Compares symlink target paths.
-    fn cmp_symlinks(&self, lhs: &Path, rhs: &Path) -> Result<Verdict> {
-        let ll = lhs.read_link().wrap_lhs()?;
-        let rl = rhs.read_link().wrap_rhs()?;
+    fn cmp_symlinks(&self, lhs: &Path, rhs: &Path) -> PrivResult<'a> {
+        let ll = lhs.read_link().annotate(self.lhs_prefix)?;
+        let rl = rhs.read_link().annotate(self.rhs_prefix)?;
 
         if ll == rl {
             Ok(Verdict::Same)
@@ -55,18 +80,17 @@ impl<'a> Verdictor<'a> {
         }
     }
 
-    /// Compares the contents of two readers.
-    fn cmp_readers<L, R>(&mut self, lhs: L, rhs: R) -> Result<Verdict>
-    where
-        L: Read,
-        R: Read,
-    {
-        let mut miti_lhs = ReadIntMitigator(lhs);
-        let mut miti_rhs = ReadIntMitigator(rhs);
+    /// Compares the contents of files `lhs` and `rhs`.
+    fn cmp_contents(&mut self, lhs: &Path, rhs: &Path) -> PrivResult<'a> {
+        let lhs_file = File::open(&lhs).annotate(self.lhs_prefix)?;
+        let rhs_file = File::open(&rhs).annotate(self.rhs_prefix)?;
+
+        let mut miti_lhs = ReadIntMitigator(lhs_file);
+        let mut miti_rhs = ReadIntMitigator(rhs_file);
 
         loop {
-            let lhs_bytes_no = miti_lhs.read(&mut self.lhs_buf).wrap_lhs()?;
-            let rhs_bytes_no = miti_rhs.read(&mut self.rhs_buf).wrap_rhs()?;
+            let lhs_bytes_no = miti_lhs.read(&mut self.lhs_buf).annotate(self.lhs_prefix)?;
+            let rhs_bytes_no = miti_rhs.read(&mut self.rhs_buf).annotate(self.rhs_prefix)?;
 
             if lhs_bytes_no != rhs_bytes_no {
                 return Ok(Verdict::Modified);
@@ -78,22 +102,14 @@ impl<'a> Verdictor<'a> {
         }
     }
 
-    /// Compares the contents of files `lhs` and `rhs`.
-    fn cmp_contents(&mut self, lhs: &Path, rhs: &Path) -> Result<Verdict> {
-        let lhs_file = File::open(&lhs).wrap_lhs()?;
-        let rhs_file = File::open(&rhs).wrap_rhs()?;
-
-        self.cmp_readers(lhs_file, rhs_file)
-    }
-
     /// Compares files with the paths ending with suffix `suffix` and beginning with prefixes
     /// passed to `new`.
-    fn cmp_files(&mut self, suffix: &Path) -> Result<Verdict> {
+    fn cmp_files(&mut self, suffix: &Path) -> PrivResult<'a> {
         let lhs_path = self.lhs_prefix.join(&suffix);
         let rhs_path = self.rhs_prefix.join(&suffix);
 
-        let lhs_metadata = lhs_path.symlink_metadata().wrap_lhs()?;
-        let rhs_metadata = rhs_path.symlink_metadata().wrap_rhs()?;
+        let lhs_metadata = lhs_path.symlink_metadata().annotate(self.lhs_prefix)?;
+        let rhs_metadata = rhs_path.symlink_metadata().annotate(self.rhs_prefix)?;
 
         let lhs_file_type = lhs_metadata.file_type();
         let rhs_file_type = rhs_metadata.file_type();
@@ -125,24 +141,17 @@ impl<'a> Verdictor<'a> {
         } else if lhs_file_type.is_dir() {
             Ok(Verdict::Same)
         } else {
-            let err_msg = format!(
-                "unrecognized file type for path: {}",
-                lhs_path.to_string_lossy()
-            );
-            Err(Error::Lhs(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                err_msg,
-            )))
+            Err((std::io::ErrorKind::InvalidData, self.lhs_prefix))
         }
     }
 
     /// Compares files with the paths ending with suffix `suffix` and beginning with prefixes
     /// passed to `new`. Relies on the caller to inform through `sel` which of the two files exist.
-    pub fn get_verdict(&mut self, sel: &SumIterSelector, path: &Path) -> Result<Verdict> {
+    pub fn get_verdict(&mut self, (sel, path): (SumIterSelector, PathBuf)) -> (Verdict, PathBuf) {
         match sel {
-            SumIterSelector::Left => Ok(Verdict::Deleted),
-            SumIterSelector::Right => Ok(Verdict::Added),
-            SumIterSelector::Both => self.cmp_files(path),
+            SumIterSelector::Left => (Verdict::Deleted, PathBuf::new()),
+            SumIterSelector::Right => (Verdict::Added, PathBuf::new()),
+            SumIterSelector::Both => priv_result_to_ver_path(self.cmp_files(&path), path),
         }
     }
 }

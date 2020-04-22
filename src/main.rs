@@ -10,9 +10,9 @@ extern crate percent_encoding;
 extern crate term_size;
 
 pub mod cli_args;
-pub mod error;
 pub mod io;
 pub mod iter;
+pub mod path_printers;
 pub mod verdict;
 pub mod verdictor;
 
@@ -33,7 +33,6 @@ use crate::iter::cmp_paths;
 use crate::iter::OkIter;
 use crate::iter::RecDirIter;
 use crate::iter::SumIter;
-use crate::iter::SumIterSelector;
 
 use crate::verdictor::Verdictor;
 
@@ -115,7 +114,7 @@ fn calc_total(lhs: &Path, rhs: &Path) -> usize {
 /// Print diff from `verdicts` as specified by `args`.
 pub fn print_diff<I>(verdicts: I, args: &CliArgs) -> usize
 where
-    I: Iterator<Item = (PathBuf, error::Result<Verdict>)>,
+    I: Iterator<Item = (Verdict, PathBuf)>,
 {
     let color_codes = match (&args.color, atty::is(atty::Stream::Stdout)) {
         (CliColor::Never, _) | (CliColor::Auto, false) => LineStatusColorCodes::no_color(),
@@ -154,12 +153,7 @@ fn run_diff(program_name: &str, args: &CliArgs) -> ExecResult {
 
     let mut verdictor = Verdictor::new(&args.old_dir, &args.new_dir, args.block_size);
 
-    let get_verdict = |(selector, path): (SumIterSelector, PathBuf)| {
-        let verdict = verdictor.get_verdict(&selector, &path);
-        (path, verdict)
-    };
-
-    let verdicts = sum_dir_iter.map(get_verdict);
+    let verdicts = sum_dir_iter.map(|v| verdictor.get_verdict(v));
 
     let err_no = print_diff(verdicts, args);
 
