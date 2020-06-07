@@ -65,7 +65,4 @@ fn main() {
 
     // rerun if anything changed in git (e.g. created a new commit)
     println!("cargo:rerun-if-changed=.git");
-
-    // rerun if anything changed in the crate tree
-    println!("cargo:rerun-if-changed=.");
 }
