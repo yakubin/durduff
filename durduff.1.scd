@@ -13,8 +13,8 @@ durduff - compare directories file by file
 *-q, --brief*
 	Report only when directories differ.
 
-*-p, --progress*
-	Show progress bar.
+*--progress* <when>
+	Print progress bar (<when> may be one of: never, always, auto).
 
 *--color* <when>
 	Print output in color (<when> may be one of: never, always, auto).

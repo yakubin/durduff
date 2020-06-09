@@ -1,19 +1,20 @@
 #[allow(dead_code)]
 mod color_codes;
-mod diff_printer;
-mod fps_buf_writer;
 mod line_status;
 mod line_status_color_codes;
 mod manual_buf_writer;
-mod percent_path;
-mod progress;
+mod output_record;
+mod print_diff;
+mod progress_status;
 mod read_int_mitigator;
+mod record_printer;
 
-pub use self::diff_printer::*;
-pub use self::fps_buf_writer::*;
+use self::output_record::*;
+
 pub use self::line_status::*;
 pub use self::line_status_color_codes::*;
 pub use self::manual_buf_writer::*;
-pub use self::percent_path::*;
-pub use self::progress::*;
+pub use self::print_diff::*;
+pub use self::progress_status::*;
 pub use self::read_int_mitigator::*;
+pub use self::record_printer::*;

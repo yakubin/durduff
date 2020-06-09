@@ -1,16 +1,13 @@
-extern crate atty;
-
-#[macro_use]
-extern crate cfg_if;
-
 extern crate getopts;
+
+extern crate libc;
 
 extern crate percent_encoding;
 
-extern crate term_size;
+#[cfg(test)]
+extern crate enum_iterator;
 
 pub mod cli_args;
-pub mod error;
 pub mod io;
 pub mod iter;
 pub mod verdict;
@@ -18,22 +15,27 @@ pub mod verdictor;
 
 use std::convert::TryFrom;
 
-use std::path::Path;
-use std::path::PathBuf;
+use std::io::Write;
 
-use crate::verdict::Verdict;
+use std::os::unix::io::AsRawFd;
+
+use std::path::Path;
 
 use crate::cli_args::CliArgs;
 use crate::cli_args::CliColor;
+use crate::cli_args::CliProgress;
 
-use crate::io::DiffPrinter;
 use crate::io::LineStatusColorCodes;
+use crate::io::print_diff;
+use crate::io::PlainRecordPrinter;
+use crate::io::ProgressiveRecordPrinter;
 
 use crate::iter::cmp_paths;
 use crate::iter::OkIter;
 use crate::iter::RecDirIter;
 use crate::iter::SumIter;
-use crate::iter::SumIterSelector;
+
+use crate::verdict::Verdict;
 
 use crate::verdictor::Verdictor;
 
@@ -55,52 +57,64 @@ fn get_version() -> String {
     }
 }
 
+#[derive(Clone, Copy, Eq, PartialEq)]
+pub enum ErrorStatus {
+    NoErrors,
+    SomeErrors,
+}
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+pub enum DiffStatus {
+    TreesSame,
+    TreesDiff,
+}
+
 /// Result of durduff execution.
 enum ExecResult {
-    AllGood,
-    SomeErrors,
-    FatalError,
+    NonFatal(ErrorStatus, DiffStatus),
+    Fatal,
 }
 
 impl ExecResult {
     /// Convert `ExecResult` to unix exit code.
     fn exit_code(&self) -> i32 {
         match self {
-            ExecResult::AllGood => 0,
-            ExecResult::SomeErrors => 1,
-            ExecResult::FatalError => 2,
+            ExecResult::NonFatal(ErrorStatus::NoErrors, DiffStatus::TreesSame) => 0,
+            ExecResult::NonFatal(ErrorStatus::NoErrors, DiffStatus::TreesDiff) => 1,
+            ExecResult::NonFatal(ErrorStatus::SomeErrors, DiffStatus::TreesSame) => 2,
+            ExecResult::NonFatal(ErrorStatus::SomeErrors, DiffStatus::TreesDiff) => 3,
+            ExecResult::Fatal => 4,
         }
     }
 }
 
+fn is_tty<S: AsRawFd>(stream: &S) -> bool {
+    unsafe { libc::isatty(stream.as_raw_fd()) == 1 }
+}
+
 fn main() {
-    let raw_args: Vec<String> = std::env::args().collect();
+    let exit_code = {
+        let raw_args: Vec<String> = std::env::args().collect();
 
-    let program_name = &raw_args[0];
+        let locking_stdout = std::io::stdout();
+        let locking_stderr = std::io::stderr();
 
-    let args = match CliArgs::try_from(&raw_args[1..]) {
-        Ok(args) => args,
-        Err(e) => {
-            eprintln!("{}: CLI error: {}", program_name, e);
-            std::process::exit(ExecResult::FatalError.exit_code());
-        }
+        let stdout = locking_stdout.lock();
+        let stderr = locking_stderr.lock();
+
+        let stdout_is_tty = is_tty(&stdout);
+        let stderr_is_tty = is_tty(&stderr);
+
+        run_diff(
+            &raw_args,
+            stdout,
+            stderr,
+            stdout_is_tty,
+            stderr_is_tty,
+        )
     };
 
-    if args.help {
-        let brief = format!("Usage: {} [options] OLD NEW", program_name);
-        print!("{}", args.usage(&brief));
-        return;
-    }
-
-    if args.version {
-        println!("durduff {}", get_version());
-        println!("\nBuild information:");
-        print_build_info();
-        return;
-    }
-
-    let exec_result = run_diff(program_name, &args);
-    std::process::exit(exec_result.exit_code());
+    std::process::exit(exit_code);
 }
 
 /// Estimate the total number of files to process, when comparing directories `lhs` and `rhs`.
@@ -109,38 +123,46 @@ fn calc_total(lhs: &Path, rhs: &Path) -> usize {
     let lhs_iter = RecDirIter::from(lhs.to_path_buf()).filter_map(Result::ok);
     let rhs_iter = RecDirIter::from(rhs.to_path_buf()).filter_map(Result::ok);
 
-    SumIter::new(lhs_iter, rhs_iter, cmp_paths).count()
-}
+    let count = SumIter::new(lhs_iter, rhs_iter, cmp_paths).count();
 
-/// Print diff from `verdicts` as specified by `args`.
-pub fn print_diff<I>(verdicts: I, args: &CliArgs) -> usize
-where
-    I: Iterator<Item = (PathBuf, error::Result<Verdict>)>,
-{
-    let color_codes = match (&args.color, atty::is(atty::Stream::Stdout)) {
-        (CliColor::Never, _) | (CliColor::Auto, false) => LineStatusColorCodes::no_color(),
-        (CliColor::Always, _) | (CliColor::Auto, true) => LineStatusColorCodes::color(),
-    };
-
-    let mut printer = DiffPrinter::new(color_codes, args.nul_terminated);
-
-    if !args.progress {
-        let mut sink = std::io::sink();
-        return printer.print_full(verdicts, args.brief, 0, &mut sink);
-    }
-
-    eprint!("calculating totals... ");
-    let total_hint = calc_total(&args.old_dir, &args.new_dir);
-    eprintln!("done.");
-
-    let stderr = std::io::stderr();
-    let mut stderr_guard = stderr.lock();
-
-    printer.print_full(verdicts, args.brief, total_hint, &mut stderr_guard)
+    count
 }
 
 /// Compare `args.old_dir` and `args.new_dir`.
-fn run_diff(program_name: &str, args: &CliArgs) -> ExecResult {
+fn run_diff<O, E>(
+    raw_args: &[String],
+    mut stdout: O,
+    mut stderr: E,
+    stdout_is_tty: bool,
+    stderr_is_tty: bool,
+) -> i32
+where
+    O: Write,
+    E: Write,
+{
+    let program_name = &raw_args[0];
+
+    let args = match CliArgs::try_from(&raw_args[1..]) {
+        Ok(args) => args,
+        Err(e) => {
+            writeln!(&mut stderr, "{}: CLI error: {}", program_name, e).unwrap();
+            return ExecResult::Fatal.exit_code();
+        }
+    };
+
+    if args.help {
+        let brief = format!("Usage: {} [options] OLD NEW", program_name);
+        writeln!(&mut stdout, "{}", args.usage(&brief)).unwrap();
+        return 0;
+    }
+
+    if args.version {
+        writeln!(&mut stdout, "durduff {}", get_version()).unwrap();
+        writeln!(&mut stdout, "\nBuild information:").unwrap();
+        print_build_info();
+        return 0;
+    }
+
     let lhs_dir_iter = RecDirIter::from(args.old_dir.clone());
     let rhs_dir_iter = RecDirIter::from(args.new_dir.clone());
 
@@ -154,22 +176,452 @@ fn run_diff(program_name: &str, args: &CliArgs) -> ExecResult {
 
     let mut verdictor = Verdictor::new(&args.old_dir, &args.new_dir, args.block_size);
 
-    let get_verdict = |(selector, path): (SumIterSelector, PathBuf)| {
-        let verdict = verdictor.get_verdict(&selector, &path);
-        (path, verdict)
+    let mut error_status = ErrorStatus::NoErrors;
+    let mut diff_status = DiffStatus::TreesSame;
+
+    let check_verdict = |(v, _): &(Verdict, _)| match v {
+        Verdict::Error(_) => error_status = ErrorStatus::SomeErrors,
+        Verdict::Same => (),
+        _ => diff_status = DiffStatus::TreesDiff,
     };
 
-    let verdicts = sum_dir_iter.map(get_verdict);
+    let keep_printing = |(v, _): &(Verdict, _)| {
+        if args.brief {
+            match v {
+                Verdict::Error(_) | Verdict::Same => true,
+                _ => false,
+            }
+        } else {
+            true
+        }
+    };
 
-    let err_no = print_diff(verdicts, args);
+    let verdicts = sum_dir_iter
+        .map(|v| verdictor.get_verdict(v))
+        .inspect(check_verdict)
+        .take_while(keep_printing);
 
-    if let Some(e) = lhs_io_err.or(rhs_io_err) {
-        eprintln!("{}: fatal error: {}", program_name, e);
-        ExecResult::FatalError
-    } else if 0 < err_no {
-        eprintln!("{}: number of errors: {}", program_name, err_no);
-        ExecResult::SomeErrors
+    let progressive = match args.progress {
+        CliProgress::Never => false,
+        CliProgress::Auto => stderr_is_tty,
+        CliProgress::Always => true,
+    };
+
+    let color_codes = match (args.color, stdout_is_tty) {
+        (CliColor::Never, _) | (CliColor::Auto, false) => LineStatusColorCodes::no_color(),
+        (CliColor::Always, _) | (CliColor::Auto, true) => LineStatusColorCodes::color(),
+    };
+
+    if progressive {
+        writeln!(&mut stderr, "calculating totals... ").unwrap();
+        let total_hint = calc_total(&args.old_dir, &args.new_dir);
+        writeln!(&mut stderr, "done.\n").unwrap();
+
+        print_diff(
+            verdicts,
+            ProgressiveRecordPrinter::new(&mut stdout, &mut stderr, total_hint),
+            color_codes.clone(),
+            args.nul_terminated,
+        )
     } else {
-        ExecResult::AllGood
+        print_diff(
+            verdicts,
+            PlainRecordPrinter::new(&mut stdout, &mut stderr),
+            color_codes.clone(),
+            args.nul_terminated,
+        )
+    }
+
+    if (diff_status, args.brief) == (DiffStatus::TreesDiff, true) {
+        writeln!(&mut stderr, "directory trees differ").unwrap();
+    }
+
+    let exec_result = if let Some(e) = lhs_io_err.or(rhs_io_err) {
+        stderr.write_all(color_codes.error).unwrap();
+        writeln!(&mut stderr, "{}: fatal error: {}", program_name, e).unwrap();
+        stderr.write_all(color_codes.reset).unwrap();
+        ExecResult::Fatal
+    } else {
+        if error_status == ErrorStatus::SomeErrors {
+            stderr.write_all(color_codes.error).unwrap();
+            writeln!(&mut stderr, "{}: nonfatal errors encountered", program_name).unwrap();
+            stderr.write_all(color_codes.reset).unwrap();
+        }
+
+        ExecResult::NonFatal(error_status, diff_status)
+    };
+
+    exec_result.exit_code()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use enum_iterator::IntoEnumIterator;
+
+    struct Outputs {
+        stdout: Vec<u8>,
+        stderr: Vec<u8>,
+        exit_code: i32,
+    }
+
+    #[derive(Clone, Copy, IntoEnumIterator)]
+    enum Args {
+        Default,
+        NulTerminator,
+        CustomBlockSize,
+        CustomBlockSizeAndNulTerminator,
+        Brief,
+        BriefAndNulTerminator,
+        CustomBlockSizeAndBrief,
+        CustomBlockSizeAndBriefAndNulTerminator,
+        NegativeBlockSize,
+        AlphabeticBlockSize,
+        ZeroBlockSize,
+    }
+
+    #[derive(Clone, Copy, IntoEnumIterator)]
+    enum FileInput {
+        Rudimentary,
+        ProblematicFileNames,
+        Identical,
+        DifferentSymlinkTargetsSameContents,
+    }
+
+    fn get_test_dir_name(file_input: FileInput) -> &'static str {
+        match file_input {
+            FileInput::Rudimentary => "rudimentary",
+            FileInput::ProblematicFileNames => "problematic-file-names",
+            FileInput::Identical => "identical",
+            FileInput::DifferentSymlinkTargetsSameContents => {
+                "different-symlink-targets-same-contents"
+            }
+        }
+    }
+
+    fn get_raw_args(file_input: FileInput, args: Args) -> Vec<String> {
+        let test_dir_path = ["test-data/", get_test_dir_name(file_input)].concat();
+
+        let old = [&test_dir_path, "/old"].concat();
+        let new = [&test_dir_path, "/new"].concat();
+
+        let options: &'static [&'static str] = match args {
+            Args::Default => &[],
+            Args::NulTerminator => &["--null"],
+            Args::CustomBlockSize => &["--block-size", "100"],
+            Args::CustomBlockSizeAndNulTerminator => &["--block-size", "100", "--null"],
+            Args::Brief => &["--brief"],
+            Args::BriefAndNulTerminator => &["--brief", "--null"],
+            Args::CustomBlockSizeAndBrief => &["--block-size", "100", "--brief"],
+            Args::CustomBlockSizeAndBriefAndNulTerminator => {
+                &["--block-size", "100", "--brief", "--null"]
+            }
+            Args::NegativeBlockSize => &["--block-size", "-5"],
+            Args::AlphabeticBlockSize => &["--block-size", "five"],
+            Args::ZeroBlockSize => &["--block-size", "0"],
+        };
+
+        [&["nomnom"], options, &[old.as_str(), new.as_str()]]
+            .concat()
+            .iter()
+            .copied()
+            .map(String::from)
+            .collect()
+    }
+
+    fn get_expected_outputs(file_input: FileInput, args: Args) -> Outputs {
+        match (file_input, args) {
+            (FileInput::Rudimentary, Args::Default) => Outputs {
+                stdout: b"+ b\n~ c\n~ foo/a\n".to_vec(),
+                stderr: Vec::new(),
+                exit_code: 1,
+            },
+            (FileInput::Rudimentary, Args::NulTerminator) => Outputs {
+                stdout: b"+ b\x00~ c\x00~ foo/a\x00".to_vec(),
+                stderr: Vec::new(),
+                exit_code: 1,
+            },
+            (FileInput::Rudimentary, Args::CustomBlockSize) => Outputs {
+                stdout: b"+ b\n~ c\n~ foo/a\n".to_vec(),
+                stderr: Vec::new(),
+                exit_code: 1,
+            },
+            (FileInput::Rudimentary, Args::CustomBlockSizeAndNulTerminator) => Outputs {
+                stdout: b"+ b\x00~ c\x00~ foo/a\x00".to_vec(),
+                stderr: Vec::new(),
+                exit_code: 1,
+            },
+            (FileInput::Rudimentary, Args::Brief) => Outputs {
+                stdout: Vec::new(),
+                stderr: b"directory trees differ\n".to_vec(),
+                exit_code: 1,
+            },
+            (FileInput::Rudimentary, Args::BriefAndNulTerminator) => Outputs {
+                stdout: Vec::new(),
+                stderr: b"directory trees differ\n".to_vec(),
+                exit_code: 1,
+            },
+            (FileInput::Rudimentary, Args::CustomBlockSizeAndBrief) => Outputs {
+                stdout: Vec::new(),
+                stderr: b"directory trees differ\n".to_vec(),
+                exit_code: 1,
+            },
+            (FileInput::Rudimentary, Args::CustomBlockSizeAndBriefAndNulTerminator) => Outputs {
+                stdout: Vec::new(),
+                stderr: b"directory trees differ\n".to_vec(),
+                exit_code: 1,
+            },
+            (FileInput::Rudimentary, Args::NegativeBlockSize) => Outputs {
+                stdout: Vec::new(),
+                stderr: b"nomnom: CLI error: invalid block size: -5\n".to_vec(),
+                exit_code: 4,
+            },
+            (FileInput::Rudimentary, Args::AlphabeticBlockSize) => Outputs {
+                stdout: Vec::new(),
+                stderr: b"nomnom: CLI error: invalid block size: five\n".to_vec(),
+                exit_code: 4,
+            },
+            (FileInput::Rudimentary, Args::ZeroBlockSize) => Outputs {
+                stdout: Vec::new(),
+                stderr: b"nomnom: CLI error: invalid block size: 0\n".to_vec(),
+                exit_code: 4,
+            },
+
+            (FileInput::ProblematicFileNames, Args::Default) => Outputs {
+                stdout: b"+ b\n- hello%0Aworld\n~ foo/a\n".to_vec(),
+                stderr: Vec::new(),
+                exit_code: 1,
+            },
+            (FileInput::ProblematicFileNames, Args::NulTerminator) => Outputs {
+                stdout: b"+ b\x00- hello\nworld\x00~ foo/a\x00".to_vec(),
+                stderr: Vec::new(),
+                exit_code: 1,
+            },
+            (FileInput::ProblematicFileNames, Args::CustomBlockSize) => Outputs {
+                stdout: b"+ b\n- hello%0Aworld\n~ foo/a\n".to_vec(),
+                stderr: Vec::new(),
+                exit_code: 1,
+            },
+            (FileInput::ProblematicFileNames, Args::CustomBlockSizeAndNulTerminator) => Outputs {
+                stdout: b"+ b\x00- hello\nworld\x00~ foo/a\x00".to_vec(),
+                stderr: Vec::new(),
+                exit_code: 1,
+            },
+            (FileInput::ProblematicFileNames, Args::Brief) => Outputs {
+                stdout: Vec::new(),
+                stderr: b"directory trees differ\n".to_vec(),
+                exit_code: 1,
+            },
+            (FileInput::ProblematicFileNames, Args::BriefAndNulTerminator) => Outputs {
+                stdout: Vec::new(),
+                stderr: b"directory trees differ\n".to_vec(),
+                exit_code: 1,
+            },
+            (FileInput::ProblematicFileNames, Args::CustomBlockSizeAndBrief) => Outputs {
+                stdout: Vec::new(),
+                stderr: b"directory trees differ\n".to_vec(),
+                exit_code: 1,
+            },
+            (FileInput::ProblematicFileNames, Args::CustomBlockSizeAndBriefAndNulTerminator) => {
+                Outputs {
+                    stdout: Vec::new(),
+                    stderr: b"directory trees differ\n".to_vec(),
+                    exit_code: 1,
+                }
+            }
+            (FileInput::ProblematicFileNames, Args::NegativeBlockSize) => Outputs {
+                stdout: Vec::new(),
+                stderr: b"nomnom: CLI error: invalid block size: -5\n".to_vec(),
+                exit_code: 4,
+            },
+            (FileInput::ProblematicFileNames, Args::AlphabeticBlockSize) => Outputs {
+                stdout: Vec::new(),
+                stderr: b"nomnom: CLI error: invalid block size: five\n".to_vec(),
+                exit_code: 4,
+            },
+            (FileInput::ProblematicFileNames, Args::ZeroBlockSize) => Outputs {
+                stdout: Vec::new(),
+                stderr: b"nomnom: CLI error: invalid block size: 0\n".to_vec(),
+                exit_code: 4,
+            },
+
+            (FileInput::Identical, Args::Default) => Outputs {
+                stdout: Vec::new(),
+                stderr: Vec::new(),
+                exit_code: 0,
+            },
+            (FileInput::Identical, Args::NulTerminator) => Outputs {
+                stdout: Vec::new(),
+                stderr: Vec::new(),
+                exit_code: 0,
+            },
+            (FileInput::Identical, Args::CustomBlockSize) => Outputs {
+                stdout: Vec::new(),
+                stderr: Vec::new(),
+                exit_code: 0,
+            },
+            (FileInput::Identical, Args::CustomBlockSizeAndNulTerminator) => Outputs {
+                stdout: Vec::new(),
+                stderr: Vec::new(),
+                exit_code: 0,
+            },
+            (FileInput::Identical, Args::Brief) => Outputs {
+                stdout: Vec::new(),
+                stderr: Vec::new(),
+                exit_code: 0,
+            },
+            (FileInput::Identical, Args::BriefAndNulTerminator) => Outputs {
+                stdout: Vec::new(),
+                stderr: Vec::new(),
+                exit_code: 0,
+            },
+            (FileInput::Identical, Args::CustomBlockSizeAndBrief) => Outputs {
+                stdout: Vec::new(),
+                stderr: Vec::new(),
+                exit_code: 0,
+            },
+            (FileInput::Identical, Args::CustomBlockSizeAndBriefAndNulTerminator) => Outputs {
+                stdout: Vec::new(),
+                stderr: Vec::new(),
+                exit_code: 0,
+            },
+            (FileInput::Identical, Args::NegativeBlockSize) => Outputs {
+                stdout: Vec::new(),
+                stderr: b"nomnom: CLI error: invalid block size: -5\n".to_vec(),
+                exit_code: 4,
+            },
+            (FileInput::Identical, Args::AlphabeticBlockSize) => Outputs {
+                stdout: Vec::new(),
+                stderr: b"nomnom: CLI error: invalid block size: five\n".to_vec(),
+                exit_code: 4,
+            },
+            (FileInput::Identical, Args::ZeroBlockSize) => Outputs {
+                stdout: Vec::new(),
+                stderr: b"nomnom: CLI error: invalid block size: 0\n".to_vec(),
+                exit_code: 4,
+            },
+
+            (FileInput::DifferentSymlinkTargetsSameContents, Args::Default) => Outputs {
+                stdout: b"- a\n+ b\n~ foo/symlink\n".to_vec(),
+                stderr: Vec::new(),
+                exit_code: 1,
+            },
+            (FileInput::DifferentSymlinkTargetsSameContents, Args::NulTerminator) => Outputs {
+                stdout: b"- a\x00+ b\x00~ foo/symlink\x00".to_vec(),
+                stderr: Vec::new(),
+                exit_code: 1,
+            },
+            (FileInput::DifferentSymlinkTargetsSameContents, Args::CustomBlockSize) => Outputs {
+                stdout: b"- a\n+ b\n~ foo/symlink\n".to_vec(),
+                stderr: Vec::new(),
+                exit_code: 1,
+            },
+            (
+                FileInput::DifferentSymlinkTargetsSameContents,
+                Args::CustomBlockSizeAndNulTerminator,
+            ) => Outputs {
+                stdout: b"- a\x00+ b\x00~ foo/symlink\x00".to_vec(),
+                stderr: Vec::new(),
+                exit_code: 1,
+            },
+            (FileInput::DifferentSymlinkTargetsSameContents, Args::Brief) => Outputs {
+                stdout: Vec::new(),
+                stderr: b"directory trees differ\n".to_vec(),
+                exit_code: 1,
+            },
+            (FileInput::DifferentSymlinkTargetsSameContents, Args::BriefAndNulTerminator) => {
+                Outputs {
+                    stdout: Vec::new(),
+                    stderr: b"directory trees differ\n".to_vec(),
+                    exit_code: 1,
+                }
+            }
+            (FileInput::DifferentSymlinkTargetsSameContents, Args::CustomBlockSizeAndBrief) => {
+                Outputs {
+                    stdout: Vec::new(),
+                    stderr: b"directory trees differ\n".to_vec(),
+                    exit_code: 1,
+                }
+            }
+            (
+                FileInput::DifferentSymlinkTargetsSameContents,
+                Args::CustomBlockSizeAndBriefAndNulTerminator,
+            ) => Outputs {
+                stdout: Vec::new(),
+                stderr: b"directory trees differ\n".to_vec(),
+                exit_code: 1,
+            },
+            (FileInput::DifferentSymlinkTargetsSameContents, Args::NegativeBlockSize) => Outputs {
+                stdout: Vec::new(),
+                stderr: b"nomnom: CLI error: invalid block size: -5\n".to_vec(),
+                exit_code: 4,
+            },
+            (FileInput::DifferentSymlinkTargetsSameContents, Args::AlphabeticBlockSize) => {
+                Outputs {
+                    stdout: Vec::new(),
+                    stderr: b"nomnom: CLI error: invalid block size: five\n".to_vec(),
+                    exit_code: 4,
+                }
+            }
+            (FileInput::DifferentSymlinkTargetsSameContents, Args::ZeroBlockSize) => Outputs {
+                stdout: Vec::new(),
+                stderr: b"nomnom: CLI error: invalid block size: 0\n".to_vec(),
+                exit_code: 4,
+            },
+        }
+    }
+
+    fn run_diff_and_gather_outputs(raw_args: &Vec<String>) -> Outputs {
+        let mut stdout = Vec::<u8>::new();
+        let mut stderr = Vec::<u8>::new();
+
+        let exit_code = run_diff(
+            raw_args,
+            &mut stdout,
+            &mut stderr,
+            /* stdout_is_tty: */ false,
+            /* stderr_is_tty: */ false,
+        );
+
+        Outputs {
+            stdout,
+            stderr,
+            exit_code,
+        }
+    }
+
+    #[test]
+    fn all_func_tests() {
+        for fi in FileInput::into_enum_iter() {
+            for a in Args::into_enum_iter() {
+                let raw_args = get_raw_args(fi, a);
+
+                let expected = get_expected_outputs(fi, a);
+                let actual = run_diff_and_gather_outputs(&raw_args);
+
+                let utf8_expected_stdout = String::from_utf8_lossy(&expected.stdout);
+                let utf8_expected_stderr = String::from_utf8_lossy(&expected.stderr);
+
+                let utf8_actual_stdout = String::from_utf8_lossy(&actual.stdout);
+                let utf8_actual_stderr = String::from_utf8_lossy(&actual.stderr);
+
+                assert_eq!(
+                    expected.stdout, actual.stdout,
+                    "stdout divergence for args: {:?}. utf-8 expected: {:?}. utf-8 actual: {:?}.",
+                    &raw_args, utf8_expected_stdout, utf8_actual_stdout
+                );
+                assert_eq!(
+                    expected.stderr, actual.stderr,
+                    "stderr divergence for args: {:?}. utf-8 expected: {:?}. utf-8 actual: {:?}.",
+                    &raw_args, utf8_expected_stderr, utf8_actual_stderr
+                );
+                assert_eq!(
+                    expected.exit_code, actual.exit_code,
+                    "exit code divergence for args: {:?}",
+                    &raw_args
+                );
+            }
+        }
     }
 }

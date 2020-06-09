@@ -3,22 +3,23 @@ use super::LineStatus;
 
 /// `LineStatusColorCodes` are the color codes used to print diff lines of different statuses (see
 /// `LineStatus`). `reset` is the escape code resetting the color to its original value.
+#[derive(Clone)]
 pub struct LineStatusColorCodes {
-    pub deleted: &'static str,
-    pub added: &'static str,
-    pub modified: &'static str,
-    pub error: &'static str,
-    pub reset: &'static str,
+    pub deleted: &'static [u8],
+    pub added: &'static [u8],
+    pub modified: &'static [u8],
+    pub error: &'static [u8],
+    pub reset: &'static [u8],
 }
 
 impl LineStatusColorCodes {
     pub fn no_color() -> Self {
         Self {
-            deleted: "",
-            added: "",
-            modified: "",
-            error: "",
-            reset: "",
+            deleted: b"",
+            added: b"",
+            modified: b"",
+            error: b"",
+            reset: b"",
         }
     }
 
@@ -32,12 +33,13 @@ impl LineStatusColorCodes {
         }
     }
 
-    pub fn get(&self, status: LineStatus) -> &'static str {
+    pub fn get(&self, status: LineStatus) -> &'static [u8] {
         match status {
             LineStatus::Deleted => self.deleted,
             LineStatus::Added => self.added,
             LineStatus::Modified => self.modified,
             LineStatus::Error => self.error,
+            LineStatus::ErrorDescription => self.error,
         }
     }
 }

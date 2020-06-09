@@ -69,10 +69,7 @@ impl From<PathBuf> for RecDirIter {
 
         let null_path = Path::new("");
 
-        if let Err(e) = try_append_dir_elems(&mut iter.to_traverse, &iter.top, &null_path) {
-            eprintln!("error in constructor. top: {}", iter.top.to_string_lossy());
-            iter.error = Some(e);
-        }
+        iter.error = try_append_dir_elems(&mut iter.to_traverse, &iter.top, &null_path).err();
 
         iter
     }
@@ -122,7 +119,6 @@ mod tests {
         }
 
         let expected = vec![
-            pb("func.test"),
             pb("new"),
             pb("old"),
             pb("new/b"),

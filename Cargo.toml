@@ -14,11 +14,12 @@ repository = "https://git.sr.ht/~yakubin/durduff"
 build = "build.rs"
 
 [dependencies]
-atty = "0.2.13"
-cfg-if = "0.1"
+libc = "0.2.71"
 getopts = "0.2"
 percent-encoding = "2.1.0"
-term_size = "0.3"
+
+[dev-dependencies]
+enum-iterator = "0.6.0"
 
 [package.metadata.deb]
 copyright = "2019, Jakub Alba <jakub@yakubin.com>"

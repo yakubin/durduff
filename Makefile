@@ -6,17 +6,11 @@ build-release:
 
 man: target/assets/durduff.1.gz
 
-debug-unit-tests:
+test-debug:
 	@cargo test
 
-release-unit-tests:
+test-release:
 	@cargo test --release
-
-debug-func-tests: target/debug/durduff
-	@shelltest --color --execdir "-D{exe}=../../target/debug/durduff" test-data
-
-release-func-tests: target/release/durduff
-	@shelltest --color --execdir "-D{exe}=../../target/release/durduff" test-data
 
 target/debug/durduff: build-debug
 

@@ -19,12 +19,12 @@ impl<W: Write> ManualBufWriter<W> {
         }
     }
 
-    pub fn capacity(&self) -> usize {
-        self.buf.capacity()
+    pub fn len(&self) -> usize {
+        self.buf.len()
     }
 
-    pub fn flush_inner(&mut self) -> io::Result<()> {
-        self.inner.flush()
+    pub fn capacity(&self) -> usize {
+        self.buf.capacity()
     }
 }
 
@@ -37,7 +37,7 @@ impl<W: Write> Write for ManualBufWriter<W> {
     fn flush(&mut self) -> io::Result<()> {
         self.inner.write_all(self.buf.as_slice())?;
         self.buf.clear();
-        Ok(())
+        self.inner.flush()
     }
 
     fn write_all(&mut self, buf: &[u8]) -> io::Result<()> {

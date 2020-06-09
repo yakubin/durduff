@@ -7,6 +7,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 /// Cli option deciding when to print colored output.
+#[derive(Clone, Copy)]
 pub enum CliColor {
     /// suppress coloring output
     Never,
@@ -15,6 +16,19 @@ pub enum CliColor {
     Always,
 
     /// print colored output if and only if stdout is attached to a tty
+    Auto,
+}
+
+/// Cli option deciding when to report progress.
+#[derive(Clone, Copy)]
+pub enum CliProgress {
+    /// suppress progress reporting
+    Never,
+
+    /// force progress reporting
+    Always,
+
+    /// report progress if and only if stdout is attached to a tty
     Auto,
 }
 
@@ -27,9 +41,9 @@ pub struct CliArgs {
 
     pub brief: bool,
 
-    pub progress: bool,
-
     pub color: CliColor,
+
+    pub progress: CliProgress,
 
     pub nul_terminated: bool,
 
@@ -59,6 +73,7 @@ pub enum CliError {
     UnexpectedArgument(String),
     InvalidBlockSize(String),
     InvalidColor(String),
+    InvalidProgress(String),
     UnexpectedFreeArgs(String),
     MissingOldDir,
     MissingNewDir,
@@ -77,6 +92,19 @@ impl FromStr for CliColor {
     }
 }
 
+impl FromStr for CliProgress {
+    type Err = CliError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "never" => Ok(CliProgress::Never),
+            "always" => Ok(CliProgress::Always),
+            "auto" => Ok(CliProgress::Auto),
+            s => Err(CliError::InvalidProgress(s.to_string())),
+        }
+    }
+}
+
 impl fmt::Display for CliError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -87,6 +115,7 @@ impl fmt::Display for CliError {
             CliError::UnexpectedArgument(s) => write!(f, "unexpected argument: {}", s),
             CliError::InvalidBlockSize(s) => write!(f, "invalid block size: {}", s),
             CliError::InvalidColor(s) => write!(f, "invalid color: {}", s),
+            CliError::InvalidProgress(s) => write!(f, "invalid progress: {}", s),
             CliError::UnexpectedFreeArgs(s) => write!(f, "unexpected free arguments: {}", s),
             CliError::MissingOldDir => write!(f, "missing OLD directory path"),
             CliError::MissingNewDir => write!(f, "missing NEW directory path"),
@@ -115,11 +144,16 @@ impl TryFrom<&[String]> for CliArgs {
         let mut opts = getopts::Options::new();
 
         opts.optflag("q", "brief", "report only when directories differ");
-        opts.optflag("p", "progress", "show progress bar");
         opts.optopt(
             "",
             "color",
             "print output in color (<when> may be one of: never, always, auto)",
+            "<when>",
+        );
+        opts.optopt(
+            "",
+            "progress",
+            "print progress bar (<when> may be one of: never, always, auto)",
             "<when>",
         );
         opts.optflag(
@@ -166,6 +200,12 @@ impl TryFrom<&[String]> for CliArgs {
             CliColor::Auto
         };
 
+        let progress: CliProgress = if let Some(p) = matches.opt_str("progress") {
+            p.parse()?
+        } else {
+            CliProgress::Auto
+        };
+
         let block_size = if let Some(b) = matches.opt_str("block-size") {
             match b.parse::<usize>() {
                 Ok(0) | Err(_) => return Err(CliError::InvalidBlockSize(b.to_string())),
@@ -180,7 +220,7 @@ impl TryFrom<&[String]> for CliArgs {
             help,
             version,
             brief: matches.opt_present("brief"),
-            progress: matches.opt_present("progress"),
+            progress,
             color,
             nul_terminated: matches.opt_present("null"),
             block_size,

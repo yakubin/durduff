@@ -4,7 +4,7 @@ use std::iter::Iterator;
 use std::iter::Peekable;
 
 /// Indicates which source iterator an item yielded from `SumIter` was yielded from.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SumIterSelector {
     Left,
     Right,

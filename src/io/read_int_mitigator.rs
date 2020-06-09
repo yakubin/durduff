@@ -72,7 +72,7 @@ mod tests {
         }
     }
 
-    const CONTENT: std::ops::Range<u8> = (0..128);
+    const CONTENT: std::ops::Range<u8> = 0..128;
 
     #[test]
     fn single_interrupt() -> Result<()> {

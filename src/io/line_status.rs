@@ -9,6 +9,7 @@ pub enum LineStatus {
     Added,
     Modified,
     Error,
+    ErrorDescription,
 }
 
 impl LineStatus {
@@ -18,6 +19,7 @@ impl LineStatus {
             LineStatus::Added => '+',
             LineStatus::Modified => '~',
             LineStatus::Error => '!',
+            LineStatus::ErrorDescription => '^',
         }
     }
 }

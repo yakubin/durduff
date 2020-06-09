@@ -42,25 +42,16 @@ The resulting gzipped man page will be located at `target/assets/durduff.1.gz`.
 
 ## Running tests
 
-You will need make,
-[cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) and
-[shelltestrunner](https://github.com/simonmichael/shelltestrunner) to do that.
+You will need make and
+[cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html).
 
-Unit tests of the debug version:
+Run tests of the debug version:
 
-    $ make debug-unit-tests
+    $ make test-debug
 
-Unit tests of the release version:
+Run tests of the release version:
 
-    $ make release-unit-tests
-
-Functional tests of the debug version:
-
-    $ make debug-func-tests
-
-Functional tests of the release version:
-
-    $ make release-func-tests
+    $ make test-release
 
 ## Options
 
@@ -71,8 +62,8 @@ Functional tests of the release version:
            -q, --brief
                Report only when directories differ.
 
-           -p, --progress
-               Show progress bar.
+           --progress <when>
+               Print progress bar (<when> may be one of: never, always, auto).
 
            --color <when>
                Print output in color (<when> may be one of: never, always, auto).
