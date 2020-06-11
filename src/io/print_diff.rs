@@ -51,7 +51,7 @@ struct OutputSetup {
 /// This function doesn't distinguish between these cases and treats `blob` as a — wait for it —
 /// blob.
 fn wrap_blob_in_record(setup: &OutputSetup, status: LineStatus, blob: &[u8]) -> Vec<u8> {
-    let prefix = [status.indicator() as u8, ' ' as u8];
+    let prefix = [status.indicator() as u8, b' '];
 
     let components = [
         setup.color_codes.get(status),
@@ -61,7 +61,7 @@ fn wrap_blob_in_record(setup: &OutputSetup, status: LineStatus, blob: &[u8]) -> 
         setup.line_terminator,
     ];
 
-    Vec::from(components.concat())
+    components.concat()
 }
 
 /// Converts `ek` into the `stderr` part of `OutputRecord` according to `OutputSetup`.

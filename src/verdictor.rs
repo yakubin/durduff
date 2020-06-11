@@ -48,11 +48,11 @@ fn priv_result_to_ver_path(result: PrivResult, path: PathBuf) -> (Verdict, PathB
 /// Used to convert `std::io::Result` into `PrivResult`, annotating errors with the path to the
 /// directory tree where they were encountered.
 trait IoResult<T> {
-    fn annotate<'a>(self, path: &'a Path) -> Result<T, PrivError>;
+    fn annotate(self, path: &Path) -> Result<T, PrivError>;
 }
 
 impl<T> IoResult<T> for io::Result<T> {
-    fn annotate<'a>(self, path: &'a Path) -> Result<T, PrivError> {
+    fn annotate(self, path: &Path) -> Result<T, PrivError> {
         match self {
             Ok(v) => Ok(v),
             Err(e) => Err((e.kind(), path)),

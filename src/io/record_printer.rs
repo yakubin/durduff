@@ -10,13 +10,13 @@ use super::ProgressStatus;
 const BYTES_PER_FLUSH: usize = 512 << 10; // 512 KiB
 
 /// Save cursor position and attributes
-const VT100_SAVE_CURSOR: &'static [u8] = b"\x1B7";
+const VT100_SAVE_CURSOR: &[u8] = b"\x1B7";
 
 /// Restore cursor position and attributes
-const VT100_RESTORE_CURSOR: &'static [u8] = b"\x1B8";
+const VT100_RESTORE_CURSOR: &[u8] = b"\x1B8";
 
 /// Clear screen from cursor down
-const VT100_CLEAR_BELOW: &'static [u8] = b"\x1B[J";
+const VT100_CLEAR_BELOW: &[u8] = b"\x1B[J";
 
 /// Prints `OutputRecord`s, assuming it's called from within a loop.
 ///

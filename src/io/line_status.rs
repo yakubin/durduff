@@ -13,7 +13,7 @@ pub enum LineStatus {
 }
 
 impl LineStatus {
-    pub fn indicator(&self) -> char {
+    pub fn indicator(self) -> char {
         match self {
             LineStatus::Deleted => '-',
             LineStatus::Added => '+',

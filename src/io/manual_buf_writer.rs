@@ -13,6 +13,8 @@ pub struct ManualBufWriter<W: Write> {
 }
 
 impl<W: Write> ManualBufWriter<W> {
+    #![allow(clippy::len_without_is_empty)]
+
     pub fn new(inner: W, capacity: usize) -> Self {
         Self {
             inner,

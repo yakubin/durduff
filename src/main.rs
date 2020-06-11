@@ -120,9 +120,7 @@ fn calc_total(lhs: &Path, rhs: &Path) -> usize {
     let lhs_iter = RecDirIter::from(lhs.to_path_buf()).filter_map(Result::ok);
     let rhs_iter = RecDirIter::from(rhs.to_path_buf()).filter_map(Result::ok);
 
-    let count = SumIter::new(lhs_iter, rhs_iter, cmp_paths).count();
-
-    count
+    SumIter::new(lhs_iter, rhs_iter, cmp_paths).count()
 }
 
 /// Testable part of `main`
