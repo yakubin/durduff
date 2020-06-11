@@ -26,8 +26,8 @@ use crate::cli_args::CliColor;
 use crate::cli_args::CliProgress;
 
 use crate::io::fmt_error_kind;
-use crate::io::LineStatusColorCodes;
 use crate::io::print_diff;
+use crate::io::LineStatusColorCodes;
 use crate::io::PlainRecordPrinter;
 use crate::io::ProgressiveRecordPrinter;
 
@@ -107,13 +107,7 @@ fn main() {
         let stdout_is_tty = is_tty(&stdout);
         let stderr_is_tty = is_tty(&stderr);
 
-        run_diff(
-            &raw_args,
-            stdout,
-            stderr,
-            stdout_is_tty,
-            stderr_is_tty,
-        )
+        run_diff(&raw_args, stdout, stderr, stdout_is_tty, stderr_is_tty)
     };
 
     std::process::exit(exit_code);
@@ -242,7 +236,12 @@ where
     let exec_result = if let Some(e) = lhs_io_err.or(rhs_io_err) {
         stderr.write_all(color_codes.error).unwrap();
         let error_desc = fmt_error_kind(e.kind());
-        writeln!(&mut stderr, "{}: fatal error: {}: {}", program_name, error_desc, e).unwrap();
+        writeln!(
+            &mut stderr,
+            "{}: fatal error: {}: {}",
+            program_name, error_desc, e
+        )
+        .unwrap();
         stderr.write_all(color_codes.reset).unwrap();
         ExecResult::Fatal
     } else {

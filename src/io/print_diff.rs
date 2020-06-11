@@ -66,7 +66,11 @@ fn wrap_blob_in_record(setup: &OutputSetup, status: LineStatus, blob: &[u8]) -> 
 
 /// Converts `ek` into the `stderr` part of `OutputRecord` according to `OutputSetup`.
 fn error_kind_to_stderr_record(setup: &OutputSetup, ek: ErrorKind) -> Vec<u8> {
-    wrap_blob_in_record(setup, LineStatus::ErrorDescription, fmt_error_kind(ek).as_bytes())
+    wrap_blob_in_record(
+        setup,
+        LineStatus::ErrorDescription,
+        fmt_error_kind(ek).as_bytes(),
+    )
 }
 
 /// Converts `(verdict, blob)` into an `OutputRecord` according to `OutputSetup`.
