@@ -3,9 +3,10 @@ use std::fmt;
 use std::io;
 use std::io::Write;
 
-/// `ManualBufWriter` provides manual writer buffering. It writes data to an in-memory buffer and
-/// flushes the data (writes it to the inner writer) only when the caller calls
-/// `ManualBufWriter::flush`.
+/// Manual writer buffering
+///
+/// `ManualBufWriter` writes data to an in-memory buffer and flushes the data only when the caller
+/// calls `ManualBufWriter::flush`.
 pub struct ManualBufWriter<W: Write> {
     inner: W,
     buf: Vec<u8>,

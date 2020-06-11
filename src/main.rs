@@ -42,7 +42,7 @@ use crate::verdictor::Verdictor;
 // Provides the `print_build_info` function.
 include!(concat!(env!("OUT_DIR"), "/build_info.rs"));
 
-/// Get `durduff` version (as specified in Cargo.toml).
+/// Returns `durduff` version from `Cargo.toml`.
 fn get_version() -> String {
     let core = format!(
         "{}.{}.{}",
@@ -69,7 +69,7 @@ pub enum DiffStatus {
     TreesDiff,
 }
 
-/// Result of durduff execution.
+/// Result of `durduff` execution
 enum ExecResult {
     NonFatal(ErrorStatus, DiffStatus),
     Fatal,
@@ -88,6 +88,7 @@ impl ExecResult {
     }
 }
 
+/// Checks whether `stream` is attached to an interactive terminal.
 fn is_tty<S: AsRawFd>(stream: &S) -> bool {
     unsafe { libc::isatty(stream.as_raw_fd()) == 1 }
 }
@@ -117,7 +118,8 @@ fn main() {
     std::process::exit(exit_code);
 }
 
-/// Estimate the total number of files to process, when comparing directories `lhs` and `rhs`.
+/// Estimates the total number of files to process, when comparing directories `lhs` and `rhs`.
+///
 /// Useful for progress reporting.
 fn calc_total(lhs: &Path, rhs: &Path) -> usize {
     let lhs_iter = RecDirIter::from(lhs.to_path_buf()).filter_map(Result::ok);
@@ -128,7 +130,7 @@ fn calc_total(lhs: &Path, rhs: &Path) -> usize {
     count
 }
 
-/// Compare `args.old_dir` and `args.new_dir`.
+/// Testable part of `main`
 fn run_diff<O, E>(
     raw_args: &[String],
     mut stdout: O,

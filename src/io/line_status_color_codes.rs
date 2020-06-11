@@ -1,14 +1,16 @@
 use super::color_codes::*;
 use super::LineStatus;
 
-/// `LineStatusColorCodes` are the color codes used to print diff lines of different statuses (see
-/// `LineStatus`). `reset` is the escape code resetting the color to its original value.
+/// Color codes used to print diff lines of different statuses (see
+/// `LineStatus`)
 #[derive(Clone)]
 pub struct LineStatusColorCodes {
     pub deleted: &'static [u8],
     pub added: &'static [u8],
     pub modified: &'static [u8],
     pub error: &'static [u8],
+
+    /// Resets the foreground color to its original value.
     pub reset: &'static [u8],
 }
 

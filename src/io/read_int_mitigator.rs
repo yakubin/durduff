@@ -2,7 +2,7 @@ use std::io::ErrorKind;
 use std::io::Read;
 use std::io::Result;
 
-/// Wrapper for a reader which mitigates problems with incomplete or interrupted reads.
+/// Reader wrapper which mitigates problems with incomplete or interrupted reads
 pub struct ReadIntMitigator<R: Read>(pub R);
 
 impl<R: Read> Read for ReadIntMitigator<R> {

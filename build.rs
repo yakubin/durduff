@@ -52,6 +52,7 @@ fn main() {
     write!(
         f,
         "
+        /// Prints build metadata to stdout.
         pub fn print_build_info() {{
             println!(\"git commit: {}\");
             println!(\"host triple: {}\");

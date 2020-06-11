@@ -1,6 +1,6 @@
 use std::iter::Iterator;
 
-/// Adaptor for an `Iterator` of `Result`s.
+/// Adaptor for an `Iterator` of `Result`s
 ///
 /// As long as the inner `Iterator` yields `Ok(v)`, `OkIter` yields `v`.
 /// When the inner `Iterator` yeilds `Err(e)`, `OkIter` assigns `Some(e)` to the variable

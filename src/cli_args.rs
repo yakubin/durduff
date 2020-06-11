@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use std::str::FromStr;
 
-/// Cli option deciding when to print colored output.
+/// Cli option deciding when to print colored output
 #[derive(Clone, Copy)]
 pub enum CliColor {
     /// suppress coloring output
@@ -19,7 +19,7 @@ pub enum CliColor {
     Auto,
 }
 
-/// Cli option deciding when to report progress.
+/// Cli option deciding when to report progress
 #[derive(Clone, Copy)]
 pub enum CliProgress {
     /// suppress progress reporting
@@ -32,7 +32,7 @@ pub enum CliProgress {
     Auto,
 }
 
-/// Result of a successful CLI args parsing.
+/// Result of successfully parsing CLI args
 pub struct CliArgs {
     opts: getopts::Options,
 
@@ -63,7 +63,7 @@ impl CliArgs {
     }
 }
 
-/// CLI args parsing error.
+/// CLI args parsing error
 #[derive(Debug)]
 pub enum CliError {
     ArgumentMissing(String),

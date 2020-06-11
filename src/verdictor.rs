@@ -10,10 +10,11 @@ use crate::io::ReadIntMitigator;
 use crate::iter::SumIterSelector;
 use crate::verdict::Verdict;
 
+/// Default block size used to read files
 const DEFAULT_BLKSIZE: usize = 512 << 10; // 512 KiB
 
-/// Based on items from `SumIter`, `Verdictor` gives verdicts whether files at a specified path
-/// (with different prefixes) differ.
+/// Based on items from `SumIter`, gives verdicts whether files at a specified path (with different
+/// prefixes) differ.
 pub struct Verdictor<'a> {
     lhs_prefix: &'a Path,
 
@@ -26,10 +27,17 @@ pub struct Verdictor<'a> {
     blksize: usize,
 }
 
+/// Couples I/O error with path prefix indicating which tree (lhs vs rhs) the error was encountered
+/// in.
+///
+/// The prefix is usually stripped, because it's not printed in the normal output. However, it may
+/// be useful when reporting errors.
 type PrivError<'a> = (io::ErrorKind, &'a Path);
 
+/// Result based on PrivError
 type PrivResult<'a> = Result<Verdict, PrivError<'a>>;
 
+/// Converts `(result, path)` into `(Verdict, PathBuf)` suitable for printing.
 fn priv_result_to_ver_path(result: PrivResult, path: PathBuf) -> (Verdict, PathBuf) {
     match result {
         Ok(verdict) => (verdict, path),
@@ -37,6 +45,8 @@ fn priv_result_to_ver_path(result: PrivResult, path: PathBuf) -> (Verdict, PathB
     }
 }
 
+/// Used to convert `std::io::Result` into `PrivResult`, annotating errors with the path to the
+/// directory tree where they were encountered.
 trait IoResult<T> {
     fn annotate<'a>(self, path: &'a Path) -> Result<T, PrivError>;
 }

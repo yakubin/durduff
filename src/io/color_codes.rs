@@ -1,4 +1,4 @@
-//! VT100 ANSI escape codes for foreground colors.
+//! VT100 ANSI escape codes for foreground colors
 
 pub const BLACK: &[u8] = b"\x1B[30m";
 pub const RED: &[u8] = b"\x1B[31m";

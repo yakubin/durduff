@@ -6,23 +6,37 @@ use super::OutputRecord;
 
 use super::ProgressStatus;
 
+/// How much bytes may be buffered before flushing
 const BYTES_PER_FLUSH: usize = 512 << 10; // 512 KiB
 
-/// Save cursor position and attributes.
+/// Save cursor position and attributes
 const VT100_SAVE_CURSOR: &'static [u8] = b"\x1B7";
 
-/// Restore cursor position and attributes.
+/// Restore cursor position and attributes
 const VT100_RESTORE_CURSOR: &'static [u8] = b"\x1B8";
 
-/// Clear screen from cursor down.
+/// Clear screen from cursor down
 const VT100_CLEAR_BELOW: &'static [u8] = b"\x1B[J";
 
+/// Prints `OutputRecord`s, assuming it's called from within a loop.
+///
+/// Implementations may perform output buffering or progress reporting.
 pub trait RecordPrinter {
+    /// The main function of `RecordPrinter`. Should be called in a loop.
+    ///
+    /// `more` hints how many elements are left to be processed after the current one. Hints that
+    /// indicate fewer elements than estimated previously will be disregarded.
+    ///
+    /// It should be called even when there is nothing to print (just use the empty record) — to
+    /// provide accurate (and frequent enough) progress reports.
     fn print(&mut self, record: &OutputRecord, more: usize);
 
+    /// Should be called after the loop is finished. It will flush output and clear the progress
+    /// report.
     fn finish(&mut self);
 }
 
+/// `RecordPrinter` which implements output buffering and progress reporting
 pub struct ProgressiveRecordPrinter<O, E>
 where
     O: Write,
@@ -40,6 +54,7 @@ where
     O: Write,
     E: Write,
 {
+    /// Constructor. `total_hint` is used for the denominator in progress reports.
     pub fn new(stdout: O, stderr: E, total_hint: usize) -> Self {
         Self {
             stdout: ManualBufWriter::new(stdout, 2 * BYTES_PER_FLUSH),
@@ -106,6 +121,7 @@ where
     }
 }
 
+/// `RecordPrinter` which implements output buffering, but not progress reporting
 pub struct PlainRecordPrinter<O, E>
 where
     O: Write,
@@ -120,6 +136,7 @@ where
     O: Write,
     E: Write,
 {
+    /// Constructor.
     pub fn new(stdout: O, stderr: E) -> Self {
         Self {
             stdout: ManualBufWriter::new(stdout, 2 * BYTES_PER_FLUSH),

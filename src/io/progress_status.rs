@@ -1,10 +1,12 @@
-/// Data necessary to print a progress bar.
+/// Data necessary to print a progress bar
 pub struct ProgressStatus {
     pub total_no: usize,
     pub processed_no: usize,
 }
 
 impl ProgressStatus {
+    /// `more` hints how many elements are left to be processed after the current one. Hints which
+    /// indicate fewer elements than estimated previously will be disregarded.
     pub fn estimate_more(&mut self, more: usize) {
         let new_total_no = self.processed_no + more;
 
@@ -13,6 +15,7 @@ impl ProgressStatus {
         }
     }
 
+    /// Should be called each time an element is processed.
     pub fn processed(&mut self) {
         if self.total_no == self.processed_no {
             self.total_no += 1;

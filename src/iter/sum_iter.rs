@@ -17,7 +17,7 @@ impl SumIterSelector {
     }
 }
 
-/// Result of peeking with two iterators.
+/// Result of peeking with two iterators
 enum TwoItersPeek {
     /// Indicates that only the left iterator yielded an element.
     Left,
@@ -31,7 +31,7 @@ enum TwoItersPeek {
 }
 
 /// Iterator yielding the sum (in the set-theoretic sense) of two iterators along with a selector
-/// indicating which iterator yielded a given item.
+/// indicating which iterator yielded a given item
 ///
 ///     +---------+         +---------+                       +------------+
 ///     | LhsIter |         | RhsIter |                       |  SumIter   |

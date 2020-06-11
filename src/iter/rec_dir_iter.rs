@@ -19,7 +19,8 @@ pub fn cmp_paths(lhs: &PathBuf, rhs: &PathBuf) -> Ordering {
     }
 }
 
-/// Recursive directory iterator.
+/// Recursive directory iterator
+///
 /// It yields paths in the order given by `cmp_paths`.
 pub struct RecDirIter {
     top: PathBuf,
