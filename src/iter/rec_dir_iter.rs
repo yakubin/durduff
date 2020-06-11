@@ -9,6 +9,8 @@ use std::iter::Iterator;
 use std::path::Path;
 use std::path::PathBuf;
 
+use crate::io::utf8_percent_encode_path;
+
 /// Compares paths, so that:
 /// - paths with a smaller number of components are smaller
 /// - paths with equal numbers of components are compared lexicographically
@@ -48,6 +50,16 @@ fn try_append_dir_elems(dst: &mut VecDeque<PathBuf>, top: &Path, dir: &Path) -> 
     Ok(())
 }
 
+/// Replaces the description of `e` with "reading directory " + UTF-8 percent-encoded `p`.
+///
+/// Needed for reporting in `run_diff`, which directory caused the error.
+fn annotate_error(p: &Path, e: io::Error) -> io::Error {
+    io::Error::new(
+        e.kind(),
+        format!("reading directory {}", utf8_percent_encode_path(p)),
+    )
+}
+
 impl RecDirIter {
     fn try_append_dir_elems(&mut self, dir: &Path) -> io::Result<()> {
         try_append_dir_elems(&mut self.to_traverse, &self.top, dir)
@@ -55,7 +67,8 @@ impl RecDirIter {
 
     fn append_dir_elems(&mut self, d: &Path) {
         if let Err(e) = self.try_append_dir_elems(d) {
-            self.error = Some(e);
+            let err_path = self.top.join(d);
+            self.error = Some(annotate_error(&err_path, e));
         }
     }
 }
@@ -70,7 +83,17 @@ impl From<PathBuf> for RecDirIter {
 
         let null_path = Path::new("");
 
-        iter.error = try_append_dir_elems(&mut iter.to_traverse, &iter.top, &null_path).err();
+        // appease the borrow checker...
+        //
+        // (writing "&iter.top" in the closure conflicts with the "&mut iter.to_traverse" below.
+        // don't ask me why...)
+        let top = &iter.top;
+
+        let annot_error = |e: io::Error| annotate_error(&top, e);
+
+        iter.error = try_append_dir_elems(&mut iter.to_traverse, &iter.top, &null_path)
+            .err()
+            .map(annot_error);
 
         iter
     }

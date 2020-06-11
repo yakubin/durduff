@@ -2,6 +2,7 @@ use std::io::ErrorKind;
 
 use std::os::unix::ffi::OsStrExt;
 
+use std::path::Path;
 use std::path::PathBuf;
 
 use percent_encoding::{utf8_percent_encode, CONTROLS};
@@ -14,6 +15,23 @@ use super::LineStatusColorCodes;
 use super::OutputRecord;
 
 use super::RecordPrinter;
+
+/// Returns a human-readable string describing `ek`.
+pub fn fmt_error_kind(ek: ErrorKind) -> &'static str {
+    match ek {
+        ErrorKind::NotFound => "file not found",
+        ErrorKind::PermissionDenied => "permission denied",
+        ErrorKind::Interrupted => "file reading was interrupted",
+        ErrorKind::InvalidData => "invalid data",
+        _ => "unexpected error",
+    }
+}
+
+/// UTF-8 percent-encodes `path`.
+pub fn utf8_percent_encode_path(path: &Path) -> String {
+    let unicode_path = path.to_string_lossy();
+    utf8_percent_encode(&unicode_path, &CONTROLS).to_string()
+}
 
 /// Determines how records are printed.
 struct OutputSetup {
@@ -48,15 +66,7 @@ fn wrap_blob_in_record(setup: &OutputSetup, status: LineStatus, blob: &[u8]) -> 
 
 /// Converts `ek` into the `stderr` part of `OutputRecord` according to `OutputSetup`.
 fn error_kind_to_stderr_record(setup: &OutputSetup, ek: ErrorKind) -> Vec<u8> {
-    let description: &[u8] = match ek {
-        ErrorKind::NotFound => b"file not found",
-        ErrorKind::PermissionDenied => b"permission denied",
-        ErrorKind::Interrupted => b"file reading was interrupted",
-        ErrorKind::InvalidData => b"invalid data",
-        _ => b"unexpected error",
-    };
-
-    wrap_blob_in_record(setup, LineStatus::ErrorDescription, description)
+    wrap_blob_in_record(setup, LineStatus::ErrorDescription, fmt_error_kind(ek).as_bytes())
 }
 
 /// Converts `(verdict, blob)` into an `OutputRecord` according to `OutputSetup`.
@@ -96,8 +106,7 @@ fn verdict_and_path_to_percent_output_record(
     if verdict == Verdict::Same {
         OutputRecord::empty()
     } else {
-        let unicode_path = path.to_string_lossy();
-        let percent_path = utf8_percent_encode(&unicode_path, &CONTROLS).to_string();
+        let percent_path = utf8_percent_encode_path(&path);
         verdict_and_blob_to_output_record(setup, verdict, percent_path.as_bytes())
     }
 }

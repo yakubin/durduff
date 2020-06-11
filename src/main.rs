@@ -25,6 +25,7 @@ use crate::cli_args::CliArgs;
 use crate::cli_args::CliColor;
 use crate::cli_args::CliProgress;
 
+use crate::io::fmt_error_kind;
 use crate::io::LineStatusColorCodes;
 use crate::io::print_diff;
 use crate::io::PlainRecordPrinter;
@@ -240,7 +241,8 @@ where
 
     let exec_result = if let Some(e) = lhs_io_err.or(rhs_io_err) {
         stderr.write_all(color_codes.error).unwrap();
-        writeln!(&mut stderr, "{}: fatal error: {}", program_name, e).unwrap();
+        let error_desc = fmt_error_kind(e.kind());
+        writeln!(&mut stderr, "{}: fatal error: {}: {}", program_name, error_desc, e).unwrap();
         stderr.write_all(color_codes.reset).unwrap();
         ExecResult::Fatal
     } else {
