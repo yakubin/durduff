@@ -11,21 +11,14 @@ impl<R: Read> Read for ReadIntMitigator<R> {
 
         let mut to_read = buf.len();
 
-        let mut last_interrupted = false;
-
         while 0 < to_read {
             let offset = buf.len() - to_read;
 
             match reader.read(&mut buf[offset..]) {
                 Ok(0) => break, // EOF
-                Ok(n) => {
-                    to_read -= n;
-                    last_interrupted = false;
-                }
+                Ok(n) => to_read -= n,
                 Err(e) => {
-                    if e.kind() == ErrorKind::Interrupted && !last_interrupted {
-                        last_interrupted = true;
-                    } else {
+                    if e.kind() != ErrorKind::Interrupted {
                         return Err(e);
                     }
                 }
@@ -98,7 +91,7 @@ mod tests {
     }
 
     #[test]
-    fn two_interrupts() {
+    fn two_interrupts() -> Result<()> {
         let content: Vec<_> = CONTENT.collect();
 
         let reader = InterruptingReader {
@@ -112,13 +105,12 @@ mod tests {
 
         let mut buf = vec![0; content.len()];
 
-        let result = mitigator.read(buf.as_mut_slice());
+        let read_no = mitigator.read(buf.as_mut_slice())?;
 
-        assert!(result.is_err());
+        assert_eq!(read_no, content.len());
+        assert_eq!(buf, content);
 
-        let err = result.err().unwrap();
-
-        assert_eq!(err.kind(), ErrorKind::Interrupted);
+        Ok(())
     }
 
     #[test]
@@ -172,7 +164,7 @@ mod tests {
     }
 
     #[test]
-    fn incomplete_reads_with_two_interrupts() {
+    fn incomplete_reads_with_two_interrupts() -> Result<()> {
         let content: Vec<_> = CONTENT.collect();
 
         assert!(40 < content.len());
@@ -188,12 +180,11 @@ mod tests {
 
         let mut buf = vec![0; content.len()];
 
-        let result = mitigator.read(buf.as_mut_slice());
+        let read_no = mitigator.read(buf.as_mut_slice())?;
 
-        assert!(result.is_err());
+        assert_eq!(read_no, content.len());
+        assert_eq!(buf, content);
 
-        let err = result.err().unwrap();
-
-        assert_eq!(err.kind(), ErrorKind::Interrupted);
+        Ok(())
     }
 }
