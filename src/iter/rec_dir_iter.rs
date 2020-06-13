@@ -30,6 +30,11 @@ pub struct RecDirIter {
     error: Option<io::Error>,
 }
 
+/// How many elements we expect a directory may have at most
+///
+/// It's just a performance hint. The program won't break in cases where it's not true.
+const DIR_ELEMS_MAX: usize = 4 << 10;
+
 fn try_append_dir_elems(dst: &mut VecDeque<PathBuf>, top: &Path, dir: &Path) -> io::Result<()> {
     let full_prefix = top.join(dir);
 
@@ -37,15 +42,16 @@ fn try_append_dir_elems(dst: &mut VecDeque<PathBuf>, top: &Path, dir: &Path) -> 
         return Ok(());
     }
 
-    let mut elems = Vec::new();
+    let mut elems = Vec::with_capacity(DIR_ELEMS_MAX);
 
     for e in full_prefix.read_dir()? {
-        elems.push(e?.path().strip_prefix(&full_prefix).unwrap().to_path_buf());
+        elems.push(e?.path().strip_prefix(top).unwrap().to_path_buf());
     }
 
-    elems.sort_unstable();
+    // the following is a lot faster than either sort_unstable, sort_unstable_by_key, or sort_by_key.
+    elems.sort_by_cached_key(|p| p.file_name().unwrap().to_os_string());
 
-    dst.extend(elems.drain(..).map(|p| dir.join(p)));
+    dst.extend(elems.drain(..));
 
     Ok(())
 }
