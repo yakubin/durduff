@@ -27,6 +27,7 @@ use crate::cli_args::CliProgress;
 
 use crate::io::fmt_error_kind;
 use crate::io::print_diff;
+use crate::io::utf8_percent_encode_path;
 use crate::io::LineStatusColorCodes;
 use crate::io::PlainRecordPrinter;
 use crate::io::ProgressiveRecordPrinter;
@@ -117,8 +118,12 @@ fn main() {
 ///
 /// Useful for progress reporting.
 fn calc_total(lhs: &Path, rhs: &Path) -> usize {
-    let lhs_iter = RecDirIter::from(lhs.to_path_buf()).filter_map(Result::ok);
-    let rhs_iter = RecDirIter::from(rhs.to_path_buf()).filter_map(Result::ok);
+    let lhs_iter = RecDirIter::try_from(lhs.to_path_buf())
+        .unwrap()
+        .filter_map(Result::ok);
+    let rhs_iter = RecDirIter::try_from(rhs.to_path_buf())
+        .unwrap()
+        .filter_map(Result::ok);
 
     SumIter::new(lhs_iter, rhs_iter, cmp_paths).count()
 }
@@ -158,8 +163,33 @@ where
         return 0;
     }
 
-    let lhs_dir_iter = RecDirIter::from(args.old_dir.clone());
-    let rhs_dir_iter = RecDirIter::from(args.new_dir.clone());
+    let lhs_dir_iter = match RecDirIter::try_from(args.old_dir.clone()) {
+        Ok(i) => i,
+        Err(_) => {
+            writeln!(
+                &mut stderr,
+                "{}: <old> is not a directory: {}",
+                program_name,
+                utf8_percent_encode_path(&args.old_dir)
+            )
+            .unwrap();
+            return ExecResult::Fatal.exit_code();
+        }
+    };
+
+    let rhs_dir_iter = match RecDirIter::try_from(args.new_dir.clone()) {
+        Ok(i) => i,
+        Err(_) => {
+            writeln!(
+                &mut stderr,
+                "{}: <new> is not a directory: {}",
+                program_name,
+                utf8_percent_encode_path(&args.new_dir)
+            )
+            .unwrap();
+            return ExecResult::Fatal.exit_code();
+        }
+    };
 
     let mut lhs_io_err = None;
     let mut rhs_io_err = None;
@@ -624,5 +654,91 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn old_is_not_a_dir() {
+        let raw_args: Vec<String> = [
+            "nomnom",
+            "test-data/rudimentary/old/foo/a",
+            "test-data/rudimentary/old",
+        ]
+        .iter()
+        .copied()
+        .map(String::from)
+        .collect();
+
+        let expected = Outputs {
+            stdout: Vec::new(),
+            stderr: b"nomnom: <old> is not a directory: test-data/rudimentary/old/foo/a\n".to_vec(),
+            exit_code: 4,
+        };
+
+        let actual = run_diff_and_gather_outputs(&raw_args);
+
+        let utf8_expected_stdout = String::from_utf8_lossy(&expected.stdout);
+        let utf8_expected_stderr = String::from_utf8_lossy(&expected.stderr);
+
+        let utf8_actual_stdout = String::from_utf8_lossy(&actual.stdout);
+        let utf8_actual_stderr = String::from_utf8_lossy(&actual.stderr);
+
+        assert_eq!(
+            expected.stdout, actual.stdout,
+            "stdout divergence for args: {:?}. utf-8 expected: {:?}. utf-8 actual: {:?}.",
+            &raw_args, utf8_expected_stdout, utf8_actual_stdout
+        );
+        assert_eq!(
+            expected.stderr, actual.stderr,
+            "stderr divergence for args: {:?}. utf-8 expected: {:?}. utf-8 actual: {:?}.",
+            &raw_args, utf8_expected_stderr, utf8_actual_stderr
+        );
+        assert_eq!(
+            expected.exit_code, actual.exit_code,
+            "exit code divergence for args: {:?}",
+            &raw_args
+        );
+    }
+
+    #[test]
+    fn new_is_not_a_dir() {
+        let raw_args: Vec<String> = [
+            "nomnom",
+            "test-data/rudimentary/old",
+            "test-data/rudimentary/old/foo/a",
+        ]
+        .iter()
+        .copied()
+        .map(String::from)
+        .collect();
+
+        let expected = Outputs {
+            stdout: Vec::new(),
+            stderr: b"nomnom: <new> is not a directory: test-data/rudimentary/old/foo/a\n".to_vec(),
+            exit_code: 4,
+        };
+
+        let actual = run_diff_and_gather_outputs(&raw_args);
+
+        let utf8_expected_stdout = String::from_utf8_lossy(&expected.stdout);
+        let utf8_expected_stderr = String::from_utf8_lossy(&expected.stderr);
+
+        let utf8_actual_stdout = String::from_utf8_lossy(&actual.stdout);
+        let utf8_actual_stderr = String::from_utf8_lossy(&actual.stderr);
+
+        assert_eq!(
+            expected.stdout, actual.stdout,
+            "stdout divergence for args: {:?}. utf-8 expected: {:?}. utf-8 actual: {:?}.",
+            &raw_args, utf8_expected_stdout, utf8_actual_stdout
+        );
+        assert_eq!(
+            expected.stderr, actual.stderr,
+            "stderr divergence for args: {:?}. utf-8 expected: {:?}. utf-8 actual: {:?}.",
+            &raw_args, utf8_expected_stderr, utf8_actual_stderr
+        );
+        assert_eq!(
+            expected.exit_code, actual.exit_code,
+            "exit code divergence for args: {:?}",
+            &raw_args
+        );
     }
 }

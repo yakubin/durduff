@@ -2,6 +2,8 @@ use std::cmp::Ordering;
 
 use std::collections::VecDeque;
 
+use std::convert::TryFrom;
+
 use std::io;
 
 use std::iter::Iterator;
@@ -35,7 +37,11 @@ pub struct RecDirIter {
 /// It's just a performance hint. The program won't break in cases where it's not true.
 const DIR_ELEMS_MAX: usize = 4 << 10;
 
-fn try_append_dir_elems(dst: &mut VecDeque<PathBuf>, top: &Path, dir: &Path) -> io::Result<()> {
+fn try_append_dir_elems(
+    dst: &mut VecDeque<PathBuf>,
+    top: &Path,
+    dir: &Path,
+) -> io::Result<()> {
     let full_prefix = top.join(dir);
 
     if !full_prefix.symlink_metadata()?.file_type().is_dir() {
@@ -79,8 +85,13 @@ impl RecDirIter {
     }
 }
 
-impl From<PathBuf> for RecDirIter {
-    fn from(top: PathBuf) -> Self {
+#[derive(Debug)]
+pub struct RecDirIterTopIsNotDir;
+
+impl TryFrom<PathBuf> for RecDirIter {
+    type Error = RecDirIterTopIsNotDir;
+
+    fn try_from(top: PathBuf) -> Result<Self, Self::Error> {
         let mut iter = Self {
             top,
             to_traverse: VecDeque::new(),
@@ -97,11 +108,24 @@ impl From<PathBuf> for RecDirIter {
 
         let annot_error = |e: io::Error| annotate_error(&top, e);
 
-        iter.error = try_append_dir_elems(&mut iter.to_traverse, &iter.top, &null_path)
-            .err()
-            .map(annot_error);
+        let top_metadata = iter.top.symlink_metadata();
 
-        iter
+        iter.error = match top_metadata {
+            Ok(m) => {
+                let ft = m.file_type();
+
+                if !ft.is_dir() {
+                    return Err(RecDirIterTopIsNotDir);
+                }
+
+                try_append_dir_elems(&mut iter.to_traverse, &iter.top, &null_path)
+                    .err()
+                    .map(annot_error)
+            }
+            Err(e) => Some(e),
+        };
+
+        Ok(iter)
     }
 }
 
@@ -140,7 +164,7 @@ mod tests {
     fn rudimentary() -> Result<(), io::Error> {
         let pb = |s: &str| PathBuf::from(s.to_string());
 
-        let paths_res: Vec<_> = RecDirIter::from(pb("test-data/rudimentary")).collect();
+        let paths_res: Vec<_> = RecDirIter::try_from(pb("test-data/rudimentary")).unwrap().collect();
 
         let mut paths = Vec::new();
 
@@ -172,7 +196,7 @@ mod tests {
     fn root_dir_does_not_exist() {
         let pb = |s: &str| PathBuf::from(s.to_string());
 
-        let mut it = RecDirIter::from(pb("xb1suKLrl0Ltenl6T0CgzbI0shecZpXYLmEqzg"));
+        let mut it = RecDirIter::try_from(pb("xb1suKLrl0Ltenl6T0CgzbI0shecZpXYLmEqzg")).unwrap();
 
         let item = it.next();
 
@@ -194,20 +218,8 @@ mod tests {
     fn root_dir_is_a_regular_file() {
         let pb = |s: &str| PathBuf::from(s.to_string());
 
-        let mut it = RecDirIter::from(pb("test-data/rudimentary/old/foo/a"));
+        let r = RecDirIter::try_from(pb("test-data/rudimentary/old/foo/a"));
 
-        let item = it.next();
-
-        assert!(item.is_some());
-
-        let result = item.unwrap();
-
-        assert!(result.is_err());
-
-        let err = result.err().unwrap();
-
-        assert_eq!(err.kind(), io::ErrorKind::Other);
-
-        assert!(it.next().is_none());
+        assert!(r.is_err());
     }
 }
