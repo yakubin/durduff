@@ -37,11 +37,7 @@ pub struct RecDirIter {
 /// It's just a performance hint. The program won't break in cases where it's not true.
 const DIR_ELEMS_MAX: usize = 4 << 10;
 
-fn try_append_dir_elems(
-    dst: &mut VecDeque<PathBuf>,
-    top: &Path,
-    dir: &Path,
-) -> io::Result<()> {
+fn try_append_dir_elems(dst: &mut VecDeque<PathBuf>, top: &Path, dir: &Path) -> io::Result<()> {
     let full_prefix = top.join(dir);
 
     if !full_prefix.symlink_metadata()?.file_type().is_dir() {
@@ -164,7 +160,9 @@ mod tests {
     fn rudimentary() -> Result<(), io::Error> {
         let pb = |s: &str| PathBuf::from(s.to_string());
 
-        let paths_res: Vec<_> = RecDirIter::try_from(pb("test-data/rudimentary")).unwrap().collect();
+        let paths_res: Vec<_> = RecDirIter::try_from(pb("test-data/rudimentary"))
+            .unwrap()
+            .collect();
 
         let mut paths = Vec::new();
 
