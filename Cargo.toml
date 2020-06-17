@@ -40,3 +40,6 @@ are replaced with U+FFFD REPLACEMENT CHARACTER. This output is not \
 script-friendly. For scripts parsing the output of durduff, printing paths as \
 raw bytes separated with NUL can be turned on with a CLI option.
 """
+
+[profile.release]
+lto = true
