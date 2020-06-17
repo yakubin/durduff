@@ -82,12 +82,9 @@ where
         self.status.processed();
         self.status.estimate_more(more);
 
-        if self.stdout.len() < BYTES_PER_FLUSH {
-            return;
-        }
-
         let cur_percent = (self.status.processed_no * 100 / self.status.total_no) as u32;
-        if self.last_percent == cur_percent {
+
+        if self.stdout.len() < BYTES_PER_FLUSH && self.last_percent == cur_percent {
             return;
         }
 
