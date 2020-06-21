@@ -1,4 +1,4 @@
-/// Data necessary to print a progress bar
+/// Data necessary to print a progress report
 pub struct ProgressStatus {
     pub total_no: usize,
     pub processed_no: usize,

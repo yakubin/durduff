@@ -63,7 +63,7 @@ Run tests of the release version:
                Report only when directories differ.
 
            --progress <when>
-               Print progress bar (<when> may be one of: never, always, auto).
+               Print progress reports (<when> may be one of: never, always, auto).
 
            --color <when>
                Print output in color (<when> may be one of: never, always, auto).

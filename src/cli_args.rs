@@ -153,7 +153,7 @@ impl TryFrom<&[String]> for CliArgs {
         opts.optopt(
             "",
             "progress",
-            "print progress bar (<when> may be one of: never, always, auto)",
+            "print progress reports (<when> may be one of: never, always, auto)",
             "<when>",
         );
         opts.optflag(

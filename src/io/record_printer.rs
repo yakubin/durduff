@@ -90,7 +90,7 @@ where
 
         self.last_percent = cur_percent;
 
-        // stderr needs to be flushed first, so that the progress bar line is cleared before we
+        // stderr needs to be flushed first, so that the progress report line is cleared before we
         // print more output
         self.stderr.flush().unwrap();
         self.stdout.flush().unwrap();
@@ -103,7 +103,7 @@ where
         )
         .unwrap();
 
-        // now we print the progress bar
+        // now we print the progress report
         self.stderr.flush().unwrap();
 
         // we leave line clearing codes in the buffer for the next flush when we will want
