@@ -10,12 +10,16 @@ _durduff()
     #
     #  The options we'll complete.
     #
-    opts="-q --brief -p --progress --color --percent -b --block-size -h --help --version"
+    opts="-q --brief --progress --color -0 --null -b --block-size -h --help --version"
 
     #
     #  Complete the arguments to some of the options.
     #
     case "${prev}" in
+        --progress)
+            COMPREPLY=( $(compgen -W "never always auto" -- ${cur}) )
+            return 0
+            ;;
         --color)
             COMPREPLY=( $(compgen -W "never always auto" -- ${cur}) )
             return 0
@@ -31,12 +35,12 @@ _durduff()
     # Suggest options only if the previous argument was an option.
     #
     case "${prev}" in
-        -q|--brief|-p|--progress|--percent|-h|--help|--version)
+        -q|--brief|-0|--null|-h|--help|--version)
             suggest_opts=1
             ;;
         *)
             case "${great_prev}" in
-                --color|-b|--block-size)
+                --progress|--color|-b|--block-size)
                     suggest_opts=1
                     ;;
                 *)
@@ -51,12 +55,12 @@ _durduff()
         suggest_opts=1
     fi
 
-    # only two directory names are necessary (and allowed)
+    # exactly two directory names are necessary (and allowed)
     case "${great_great_prev}" in
         --)
             suggest_dirs=0
             ;;
-        -b|--block-size|--color)
+        -b|--block-size|--color|--progress)
             suggest_dirs=1
             ;;
         *)
