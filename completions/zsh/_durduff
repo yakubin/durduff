@@ -1,11 +1,11 @@
 #compdef durduff
 _arguments -s \
     '(-q --brief)'{-q,--brief}'[Report only when directories differ]' \
-    '(--progress)'--progress'[Show progress reports]:when:(never always auto)' \
+    '(--progress)'--progress'[Print progress reports]:when:(never always auto)' \
     '(--color)'--color'[Print output in color]:when:(never always auto)' \
     '(-0 --null)'{-0,--null}'[Print raw NUL-separated paths]' \
     '(-b --block-size)'{-b,--block-size}'[Read files in blocks of <block-size> bytes]:block_size:()' \
     '(-h --help)'{-h,--help}'[Print help information and exit]' \
-    '(--version)'--version'[Print version information and exit]' \
+    '(-V --version)'{-V,--version}'[Print version information and exit]' \
     '1:old:_directories' \
     '2:new:_directories'

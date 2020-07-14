@@ -78,7 +78,7 @@ Run tests of the release version:
            -h, --help
                Print help information and exit.
 
-           --version
+           -V, --version
                Print version information and exit.
 
 ## Example usage

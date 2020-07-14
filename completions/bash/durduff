@@ -10,7 +10,7 @@ _durduff()
     #
     #  The options we'll complete.
     #
-    opts="-q --brief --progress --color -0 --null -b --block-size -h --help --version"
+    opts="-q --brief --progress --color -0 --null -b --block-size -h --help -V --version"
 
     #
     #  Complete the arguments to some of the options.
@@ -35,7 +35,7 @@ _durduff()
     # Suggest options only if the previous argument was an option.
     #
     case "${prev}" in
-        -q|--brief|-0|--null|-h|--help|--version)
+        -q|--brief|-0|--null|-h|--help|-V|--version)
             suggest_opts=1
             ;;
         *)

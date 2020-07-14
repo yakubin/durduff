@@ -15,11 +15,14 @@ build = "build.rs"
 
 [dependencies]
 libc = "0.2.71"
-getopts = "0.2"
 percent-encoding = "2.1.0"
 
+[dependencies.clap]
+version = "2.33.1"
+default-features = false
+
 [dev-dependencies]
-enum-iterator = "0.6.0"
+permutohedron = "0.2.4"
 
 [package.metadata.deb]
 copyright = "2019, Jakub Alba <jakub@yakubin.com>"

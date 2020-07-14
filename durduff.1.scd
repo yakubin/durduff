@@ -29,7 +29,7 @@ durduff - compare directories file by file
 *-h, --help*
 	Print help information and exit.
 
-*--version*
+*-V, --version*
 	Print version information and exit.
 
 # AUTHOR
