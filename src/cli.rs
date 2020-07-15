@@ -66,32 +66,37 @@ pub fn parse_cli(args: &[OsString]) -> Cli {
         .arg(Arg::with_name("brief")
             .short("q")
             .long("brief")
-            .help("Report only when directories differ"))
+            .help("Report only when directories differ")
+            .display_order(1))
+        .arg(Arg::with_name("null")
+            .short("0")
+            .long("null")
+            .help("Print raw NUL-separated paths")
+            .display_order(2))
         .arg(Arg::with_name("color")
             .long("color")
             .value_name("when")
             .help("Print output in color")
             .takes_value(true)
             .possible_values(&["never", "always", "auto"])
-            .default_value("auto"))
+            .default_value("auto")
+            .display_order(3))
         .arg(Arg::with_name("progress")
             .long("progress")
             .value_name("when")
             .help("Print progress reports")
             .takes_value(true)
             .possible_values(&["never", "always", "auto"])
-            .default_value("auto"))
-        .arg(Arg::with_name("null")
-            .short("0")
-            .long("null")
-            .help("Print file paths as raw bytes without percent-encoding them and use NUL (null character) instead of LF (new line) to separate lines"))
+            .default_value("auto")
+            .display_order(4))
         .arg(Arg::with_name("block-size")
             .short("b")
             .long("block-size")
             .value_name("block-size")
             .help("Read files in blocks of <block-size> bytes")
             .takes_value(true)
-            .validator(is_valid_block_size))
+            .validator(is_valid_block_size)
+            .display_order(5))
         .help_message("Print help information and exit")
         .version_message("Print version information and exit")
         .arg(Arg::with_name("old")
@@ -130,12 +135,10 @@ pub fn parse_cli(args: &[OsString]) -> Cli {
 
         Ok(CliArgs {
             brief: matches.is_present("brief"),
+            nul_terminated: matches.is_present("null"),
 
             color,
-
             progress,
-
-            nul_terminated: matches.is_present("null"),
 
             block_size,
 

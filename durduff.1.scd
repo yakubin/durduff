@@ -13,15 +13,14 @@ durduff - compare directories file by file
 *-q, --brief*
 	Report only when directories differ.
 
+*-0, --null*
+	Print raw NUL-separated paths. In particular, do no percent-encode them.
+
 *--progress* <when>
 	Print progress reports (<when> may be one of: never, always, auto).
 
 *--color* <when>
 	Print output in color (<when> may be one of: never, always, auto).
-
-*-0, --null*
-	Print file paths as raw bytes without percent-encoding them and use NUL
-	(null character) instead of LF (new line) to separate lines.
 
 *-b, --block-size* <block-size>
 	Read files in blocks of <block-size> bytes.
