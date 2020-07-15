@@ -1,7 +1,8 @@
 pub mod cli;
 pub mod io;
 pub mod iter;
-#[macro_use] pub mod osvec;
+#[macro_use]
+pub mod osvec;
 pub mod verdict;
 pub mod verdictor;
 
@@ -15,8 +16,8 @@ use std::os::unix::io::AsRawFd;
 
 use std::path::Path;
 
-use crate::cli::TtyEnabledOutput;
 use crate::cli::parse_cli;
+use crate::cli::TtyEnabledOutput;
 
 use crate::io::fmt_error_kind;
 use crate::io::print_diff;
@@ -141,7 +142,7 @@ where
             match e.kind {
                 clap::ErrorKind::HelpDisplayed | clap::ErrorKind::VersionDisplayed => {
                     write!(&mut stderr, "{}", e).unwrap();
-                },
+                }
                 _ => {
                     write!(&mut stderr, "{}: {}", cli.bin_name, e).unwrap();
                 }
@@ -220,8 +221,12 @@ where
     };
 
     let color_codes = match (args.color, stdout_is_tty) {
-        (TtyEnabledOutput::Never, _) | (TtyEnabledOutput::Auto, false) => LineStatusColorCodes::no_color(),
-        (TtyEnabledOutput::Always, _) | (TtyEnabledOutput::Auto, true) => LineStatusColorCodes::color(),
+        (TtyEnabledOutput::Never, _) | (TtyEnabledOutput::Auto, false) => {
+            LineStatusColorCodes::no_color()
+        }
+        (TtyEnabledOutput::Always, _) | (TtyEnabledOutput::Auto, true) => {
+            LineStatusColorCodes::color()
+        }
     };
 
     if progressive {
@@ -372,10 +377,7 @@ mod tests {
 
     #[test]
     fn rudimentary_with_newline() {
-        let args: &[&[&str]] = &[
-            &[],
-            &["--block-size", "100"],
-        ];
+        let args: &[&[&str]] = &[&[], &["--block-size", "100"]];
 
         let expected = ExpectedOutputs {
             stdout: "+ b\n~ c\n~ foo/a\n",
@@ -391,10 +393,7 @@ mod tests {
 
     #[test]
     fn rudimentary_with_null() {
-        let args: &[&[&str]] = &[
-            &["--null"],
-            &["--block-size", "100", "--null"],
-        ];
+        let args: &[&[&str]] = &[&["--null"], &["--block-size", "100", "--null"]];
 
         let expected = ExpectedOutputs {
             stdout: "+ b\x00~ c\x00~ foo/a\x00",
@@ -410,10 +409,7 @@ mod tests {
 
     #[test]
     fn problematic_file_names_with_newline() {
-        let args: &[&[&str]] = &[
-            &[],
-            &["--block-size", "100"],
-        ];
+        let args: &[&[&str]] = &[&[], &["--block-size", "100"]];
 
         let expected = ExpectedOutputs {
             stdout: "+ b\n- hello%0Aworld\n~ foo/a\n",
@@ -429,10 +425,7 @@ mod tests {
 
     #[test]
     fn problematic_file_names_with_null() {
-        let args: &[&[&str]] = &[
-            &["--null"],
-            &["--block-size", "100", "--null"],
-        ];
+        let args: &[&[&str]] = &[&["--null"], &["--block-size", "100", "--null"]];
 
         let expected = ExpectedOutputs {
             stdout: "+ b\x00- hello\nworld\x00~ foo/a\x00",
@@ -448,10 +441,7 @@ mod tests {
 
     #[test]
     fn different_symlink_targets_same_contents_with_newline() {
-        let args: &[&[&str]] = &[
-            &[],
-            &["--block-size", "100"],
-        ];
+        let args: &[&[&str]] = &[&[], &["--block-size", "100"]];
 
         let expected = ExpectedOutputs {
             stdout: "- a\n+ b\n~ foo/symlink\n",
@@ -467,10 +457,7 @@ mod tests {
 
     #[test]
     fn different_symlink_targets_same_contents_with_null() {
-        let args: &[&[&str]] = &[
-            &["--null"],
-            &["--block-size", "100", "--null"],
-        ];
+        let args: &[&[&str]] = &[&["--null"], &["--block-size", "100", "--null"]];
 
         let expected = ExpectedOutputs {
             stdout: "- a\x00+ b\x00~ foo/symlink\x00",
@@ -515,7 +502,11 @@ mod tests {
 
     #[test]
     fn old_is_not_a_dir() {
-        let args = osvec!["nomnom", "test-data/rudimentary/old/foo/a", "test-data/rudimentary/old"];
+        let args = osvec![
+            "nomnom",
+            "test-data/rudimentary/old/foo/a",
+            "test-data/rudimentary/old"
+        ];
 
         let expected = ExpectedOutputs {
             stdout: "",
@@ -528,7 +519,11 @@ mod tests {
 
     #[test]
     fn new_is_not_a_dir() {
-        let args = osvec!["nomnom", "test-data/rudimentary/old", "test-data/rudimentary/old/foo/a"];
+        let args = osvec![
+            "nomnom",
+            "test-data/rudimentary/old",
+            "test-data/rudimentary/old/foo/a"
+        ];
 
         let expected = ExpectedOutputs {
             stdout: "",
@@ -541,9 +536,7 @@ mod tests {
 
     #[test]
     fn negative_block_size() {
-        let args: &[&[&str]] = &[
-            &["--block-size", "-5"],
-        ];
+        let args: &[&[&str]] = &[&["--block-size", "-5"]];
 
         let expected = ExpectedOutputs {
             stdout: "",
@@ -561,9 +554,7 @@ mod tests {
 
     #[test]
     fn alphabetic_block_size() {
-        let args: &[&[&str]] = &[
-            &["--block-size", "five"],
-        ];
+        let args: &[&[&str]] = &[&["--block-size", "five"]];
 
         let expected = ExpectedOutputs {
             stdout: "",
@@ -579,9 +570,7 @@ mod tests {
 
     #[test]
     fn zero_block_size() {
-        let args: &[&[&str]] = &[
-            &["--block-size", "0"],
-        ];
+        let args: &[&[&str]] = &[&["--block-size", "0"]];
 
         let expected = ExpectedOutputs {
             stdout: "",
