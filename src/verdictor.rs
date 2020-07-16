@@ -17,12 +17,7 @@ const DEFAULT_BLKSIZE: usize = 512 << 10; // 512 KiB
 /// prefixes) differ.
 pub struct Verdictor<'a> {
     lhs_prefix: &'a Path,
-
     rhs_prefix: &'a Path,
-
-    lhs_buf: Vec<u8>,
-
-    rhs_buf: Vec<u8>,
 
     blksize: usize,
 }
@@ -71,9 +66,6 @@ impl<'a> Verdictor<'a> {
             lhs_prefix,
             rhs_prefix,
 
-            lhs_buf: Vec::new(),
-            rhs_buf: Vec::new(),
-
             blksize: blksize_override.unwrap_or(DEFAULT_BLKSIZE),
         }
     }
@@ -98,15 +90,18 @@ impl<'a> Verdictor<'a> {
         let mut miti_lhs = ReadIntMitigator(lhs_file);
         let mut miti_rhs = ReadIntMitigator(rhs_file);
 
+        let mut lhs_buf = vec![0_u8; self.blksize];
+        let mut rhs_buf = vec![0_u8; self.blksize];
+
         loop {
-            let lhs_bytes_no = miti_lhs.read(&mut self.lhs_buf).annotate(self.lhs_prefix)?;
-            let rhs_bytes_no = miti_rhs.read(&mut self.rhs_buf).annotate(self.rhs_prefix)?;
+            let lhs_bytes_no = miti_lhs.read(&mut lhs_buf).annotate(self.lhs_prefix)?;
+            let rhs_bytes_no = miti_rhs.read(&mut rhs_buf).annotate(self.rhs_prefix)?;
 
             if lhs_bytes_no != rhs_bytes_no {
                 return Ok(Verdict::Modified);
             } else if lhs_bytes_no == 0 {
                 return Ok(Verdict::Same);
-            } else if self.lhs_buf != self.rhs_buf {
+            } else if lhs_buf != rhs_buf {
                 return Ok(Verdict::Modified);
             }
         }
@@ -141,9 +136,6 @@ impl<'a> Verdictor<'a> {
             self.cmp_symlinks(&lhs_path, &rhs_path)
         } else if lhs_file_type.is_file() {
             if lhs_metadata.len() == rhs_metadata.len() {
-                self.lhs_buf = vec![0_u8; self.blksize];
-                self.rhs_buf = vec![0_u8; self.blksize];
-
                 self.cmp_contents(&lhs_path, &rhs_path)
             } else {
                 Ok(Verdict::Modified)
