@@ -84,7 +84,7 @@ where
 
         let cur_percent = (self.status.processed_no * 100 / self.status.total_no) as u32;
 
-        if self.stdout.len() < BYTES_PER_FLUSH && self.last_percent == cur_percent {
+        if self.stdout.len() < BYTES_PER_FLUSH && self.last_percent == cur_percent && record.stderr.is_empty() {
             return;
         }
 
@@ -151,7 +151,7 @@ where
         self.stdout.write_all(record.stdout.as_slice()).unwrap();
         self.stderr.write_all(record.stderr.as_slice()).unwrap();
 
-        if BYTES_PER_FLUSH <= self.stdout.len() {
+        if BYTES_PER_FLUSH <= self.stdout.len() || !record.stderr.is_empty() {
             self.stdout.flush().unwrap();
             self.stderr.flush().unwrap();
         }
